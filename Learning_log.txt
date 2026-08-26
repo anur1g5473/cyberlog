@@ -72,6 +72,12 @@ This log tracks the security architecture, implementation details, real bugs enc
   2. Implemented strict environment validation via `validateEnv()` so missing secrets trigger clear console warnings without exposing dummy fallback secrets in code.
 
 
+[BUG 6] Next.js Environment Variable Interpolation Erasing Bcrypt Hashes in `.env`
+- What happened: Entering the correct master passphrase failed with "Invalid passphrase", even though the passphrase matched the generated bcrypt hash.
+- Why it happened: Next.js uses `@next/env` to load `.env` files. Unescaped `$` signs in `.env` (like `$2a$10$...`) are interpreted by `@next/env` as shell/variable interpolation (e.g. attempting to look up environment variables `$2a` and `$1FhJI...`). Because those variables don't exist, Next.js substituted them with empty strings, causing `process.env.ADMIN_PASSPHRASE_HASH` to load as `""` (empty string) at runtime!
+- How we fixed it: Escaped the dollar signs inside `.env` using backslashes: `ADMIN_PASSPHRASE_HASH="\$2a\$10\$1FhJIiVk..."`. `@next/env` now loads the full `$2a$10$...` hash string into memory, and `bcrypt.compare()` matches the passphrase successfully.
+
+
 --------------------------------------------------------------------
 3. FUTURE REVISION & STUDY NOTES
 --------------------------------------------------------------------

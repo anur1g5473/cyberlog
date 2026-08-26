@@ -1,4 +1,4 @@
- -/**
+/**
  * Environment configuration validator & getter.
  * Centralized location for all system configuration constants.
  */
@@ -21,4 +21,5 @@ export function validateEnv() {
     console.warn('[SECURITY WARNING] JWT_SECRET is missing or insecurely short.');
   }
 }
+
 
