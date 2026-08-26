@@ -1,0 +1,72 @@
+====================================================================
+CYBERLOG: SECURITY LEARNING LOG & TROUBLESHOOTING JOURNAL
+====================================================================
+
+This log tracks the security architecture, implementation details, real bugs encountered, why they happened, and how they were solved. 
+
+--------------------------------------------------------------------
+1. SECURITY IMPLEMENTATION DETAILS
+--------------------------------------------------------------------
+
+[1.1] Master Passphrase Security (Zero-Cleartext Storage)
+- We never store cleartext passwords in code or in `.env`.
+- We hash the passphrase using bcrypt with 10 salt rounds ($2a$10$...).
+- Verification is done on the server using `bcrypt.compare()`.
+- Why? Bcrypt uses salted Blowfish key-derivation which is computationally expensive for GPUs, preventing rainbow table attacks. It also executes constant-time string comparisons, protecting against timing attacks where an attacker guesses characters by measuring response time differences.
+
+[1.2] Progressive Rate-Limiting & Lockout Engine
+- Tracks failed login attempts per IP address using Supabase (`login_attempts` table) with an in-memory fallback.
+- Tries 1-2: Sends warning message with remaining attempts.
+- Try 3: Triggers a mandatory 10-second IP lockout penalty.
+- Try 6: Escalates to a 30-second lockout.
+- Try 9+: Escalates to 60-second+ lockouts.
+- UI Behavior: On HTTP 429 response, the login button and inputs lock down, and a live second-by-second countdown timer runs on screen.
+
+[1.3] Anti-Bot Math CAPTCHA (Stateless HMAC Tokens)
+- When the login page loads, the server generates a random math puzzle (e.g. 18 + 27).
+- The answer is signed into a JWT token using `jose` (HMAC-SHA256) with a 5-minute expiration timestamp (`5m`).
+- No database storage is needed to hold active puzzles. The server validates the answer statelessly by verifying the JWT signature.
+
+[1.4] Session Security & Cookies
+- Successful login issues a signed JWT session cookie (`admin_session`).
+- Cookie flags used:
+  - `HttpOnly`: Prevents client-side JS (`document.cookie`) from reading the session token (protects against XSS session theft).
+  - `SameSite=Lax`: Restricts cross-site request forgery (CSRF).
+  - `Secure`: Ensures cookies are only sent over HTTPS in production.
+
+
+--------------------------------------------------------------------
+2. REAL BUGS ENCOUNTERED, WHY THEY HAPPENED & HOW WE FIXED THEM
+--------------------------------------------------------------------
+
+[BUG 1] The "2 Attempts Left" Infinite Lockout Loop
+- What happened: When testing wrong password attempts, the counter kept staying stuck at "2 attempts remaining" forever instead of locking out after 3 tries.
+- Why it happened: In Supabase SDK, calling `.single()` on a table query throws a fatal error (code `PGRST116`) if zero matching rows exist (e.g. when an IP tries to log in for the first time). Because it threw an unhandled error inside try/catch, the failed count kept resetting to 1 on every single attempt.
+- How we fixed it: Replaced `.single()` with `.maybeSingle()`, which safely returns `null` instead of throwing an error when an IP has 0 prior attempts. We also added `{ onConflict: 'identifier' }` to the Supabase `.upsert()` query so existing IP records update properly.
+
+[BUG 2] Bounced Back to Login Screen After Correct Password (Localhost Cookie Bug)
+- What happened: Logging in with the correct passphrase authorized the request, but accessing `/admin/dashboard` immediately redirected back to `/admin/login`.
+- Why it happened: We originally hardcoded `Secure: true` on the `admin_session` cookie. The `Secure` flag tells browsers to ONLY send the cookie over HTTPS. Because local development runs on unencrypted HTTP (`http://localhost:3000`), the browser rejected and discarded the cookie immediately. Without a cookie, the dashboard kicked us back to login.
+- How we fixed it: We made the `secure` setting dynamic by inspecting the `x-forwarded-proto` request header: `const isHttps = req.headers.get('x-forwarded-proto') === 'https'; secure: isHttps`. On `localhost` (HTTP) it sets `secure: false`, while on Vercel/Production (HTTPS) it sets `secure: true`.
+
+[BUG 3] Math CAPTCHA Worked Locally but Expired / Broke on Vercel
+- What happened: On local dev, refreshing the page generated a new math puzzle. On Vercel, the math problem never changed, and submitting any answer threw "Math challenge session expired or invalid. Please refresh".
+- Why it happened: Next.js on Vercel statically cached the `/api/auth/challenge` GET endpoint at build time. Vercel ran the challenge generator ONCE during build, generating a 5-minute token. Every single live visitor on Vercel received that same 5-minute-old build token. When visitors clicked refresh, Vercel's CDN served the static cached response again.
+- How we fixed it: 
+  1. Added `export const dynamic = 'force-dynamic'` and `export const revalidate = 0` to `/api/auth/challenge/route.ts`.
+  2. Added response headers: `'Cache-Control': 'no-store, max-age=0'`.
+  3. Added timestamp cache-busting to the client fetch: `fetch('/api/auth/challenge?t=' + Date.now(), { cache: 'no-store' })`.
+
+[BUG 4] Published Blog Post Saved in Supabase but Not Visible to Visitors
+- What happened: Creating and publishing a new post in the admin panel saved it to Supabase and showed it in the admin dashboard, but visiting `/blog` or `/` showed nothing.
+- Why it happened: Next.js App Router aggressively caches rendered HTML pages for production speed. Inserting a new row in Supabase doesn't automatically notify Next.js to throw away its old rendered HTML cache for `/blog`. Additionally, querying `.eq('status', 'PUBLISHED')` was case-sensitive.
+- How we fixed it:
+  1. Updated database query to `.ilike('status', 'published')` for case-insensitive matching.
+  2. Added `revalidatePath('/blog')`, `revalidatePath('/')`, and `revalidatePath('/admin/dashboard')` inside our API endpoints when a post is created, edited, or deleted.
+
+--------------------------------------------------------------------
+3. FUTURE REVISION & STUDY NOTES
+--------------------------------------------------------------------
+- When adding new dynamic API endpoints in Next.js, always remember to set `export const dynamic = 'force-dynamic'` if they depend on real-time data or timers.
+- Whenever mutating database data (POST, PUT, DELETE), always call `revalidatePath()` to clear Next.js page caches.
+- Keep updating this log whenever a new security feature or bug is addressed!
