@@ -1,0 +1,1 @@
+export default function NowPage() { return <div>Now page</div>; }

@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-main: #0a0a0a;
+  --terminal-green: #00ff41;
+  --terminal-red: #ff3b3b;
+  --terminal-amber: #ffb703;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: #e0e0e0;
+  font-family: 'Fira Code', 'JetBrains Mono', Courier, monospace;
+  overflow-x: hidden;
+  background-image: 
+    radial-gradient(rgba(0, 255, 65, 0.05) 1px, transparent 1px),
+    radial-gradient(rgba(0, 255, 65, 0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: 0 0, 20px 20px;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+  background: #1a2e1e;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 255, 65, 0.2);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #00ff41;
+}
+
+/* Selection Color */
+::selection {
+  background: rgba(0, 255, 65, 0.3);
+  color: #00ff41;
+}
