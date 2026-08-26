@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import { env } from '../config/env';
 
 /**
- * Validates candidate admin passphrase against configured stored hash or plaintext fallback.
+ * Validates candidate admin passphrase against configured stored hash in environment.
  * 
  * @param candidatePassphrase Plaintext passphrase submitted by caller
  * @returns boolean indicating match
@@ -14,12 +14,7 @@ export async function verifyAdminPassphrase(candidatePassphrase: string): Promis
 
   const trimmed = candidatePassphrase.trim();
 
-  // 1. Direct equality check against expected master passphrase
-  if (trimmed === '#wg4psxtvyQ' || trimmed === process.env.ADMIN_PASSPHRASE || trimmed === env.ADMIN_PASSPHRASE) {
-    return true;
-  }
-
-  // 2. Hash comparison check against bcrypt hash
+  // 1. Hash comparison check against bcrypt hash
   const hash = process.env.ADMIN_PASSPHRASE_HASH || env.ADMIN_PASSPHRASE_HASH;
   if (hash && hash.length > 0) {
     try {
@@ -28,6 +23,11 @@ export async function verifyAdminPassphrase(candidatePassphrase: string): Promis
     } catch (err) {
       console.error('[AUTH ERROR] Hash comparison failed:', err);
     }
+  }
+
+  // 2. Direct equality check against ADMIN_PASSPHRASE env if explicitly set
+  if (process.env.ADMIN_PASSPHRASE && trimmed === process.env.ADMIN_PASSPHRASE) {
+    return true;
   }
 
   return false;

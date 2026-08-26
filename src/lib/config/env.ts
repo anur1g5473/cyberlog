@@ -6,7 +6,7 @@
 export const env = {
   DATABASE_URL: process.env.DATABASE_URL || 'file:./dev.db',
   ADMIN_PASSPHRASE_HASH: process.env.ADMIN_PASSPHRASE_HASH || '',
-  ADMIN_PASSPHRASE: process.env.ADMIN_PASSPHRASE || 'admin123',
+  ADMIN_PASSPHRASE: process.env.ADMIN_PASSPHRASE || '',
   JWT_SECRET: process.env.JWT_SECRET || 'super-secret-cybersecurity-admin-jwt-key-2026-secure-random',
   NODE_ENV: process.env.NODE_ENV || 'development',
   IS_DEV: process.env.NODE_ENV !== 'production',
