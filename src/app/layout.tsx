@@ -20,8 +20,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className="dark">
       <head>
-        <title>CyberLog // Cybersecurity Portfolio & Research Blog</title>
+        <title>CyberLog ❯ Security Research &amp; Portfolio</title>
         <meta name="description" content="Personal portfolio and research log documenting web security, network pentesting, auth engineering, and tools." />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="shortcut icon" href="/favicon.svg" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

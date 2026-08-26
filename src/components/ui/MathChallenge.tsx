@@ -21,7 +21,7 @@ export function MathChallenge({ onValidated }: MathChallengeProps) {
     setIsSuccess(false);
 
     try {
-      const res = await fetch('/api/auth/challenge');
+      const res = await fetch(`/api/auth/challenge?t=${Date.now()}`, { cache: 'no-store' });
       const data = await res.json();
       if (data.token) {
         setChallenge(data);

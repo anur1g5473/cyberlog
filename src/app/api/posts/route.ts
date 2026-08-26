@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPublishedPosts, getAllPostsForAdmin, createPost } from '@/lib/db/posts';
 import { verifyAdminSession } from '@/lib/auth/session';
+import { revalidatePath } from 'next/cache';
 
 export async function GET(req: NextRequest) {
   try {
@@ -34,6 +35,12 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const newPost = await createPost(body);
+
+    // Purge Next.js cache so the new post immediately appears on blog & home page
+    revalidatePath('/blog');
+    revalidatePath('/');
+    revalidatePath('/admin/dashboard');
+
     return NextResponse.json(newPost, { status: 201 });
   } catch (error) {
     console.error('Error creating post:', error);

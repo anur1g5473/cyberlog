@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updatePost, deletePost } from '@/lib/db/posts';
 import { verifyAdminSession } from '@/lib/auth/session';
+import { revalidatePath } from 'next/cache';
 
 export async function PUT(
   req: NextRequest,
@@ -14,6 +15,13 @@ export async function PUT(
 
     const body = await req.json();
     const updated = await updatePost({ id: params.id, ...body });
+
+    revalidatePath('/blog');
+    revalidatePath('/');
+    if (updated?.slug) {
+      revalidatePath(`/blog/${updated.slug}`);
+    }
+
     return NextResponse.json(updated);
   } catch (error) {
     console.error('Error updating post:', error);
@@ -32,6 +40,10 @@ export async function DELETE(
     }
 
     await deletePost(params.id);
+
+    revalidatePath('/blog');
+    revalidatePath('/');
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting post:', error);

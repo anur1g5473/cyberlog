@@ -2,12 +2,16 @@ import { supabase } from '@/lib/db/supabase';
 
 export async function getPublishedPosts(tag?: string) {
   try {
-    let query = supabase.from('posts').select('*').eq('status', 'PUBLISHED').order('createdAt', { ascending: false });
+    let query = supabase.from('posts').select('*').ilike('status', 'published').order('createdAt', { ascending: false });
     if (tag) query = query.ilike('tags', `%${tag}%`);
     const { data, error } = await query;
     if (error) {
-      console.error('Error fetching published posts:', error);
-      return [];
+      console.error('Error fetching published posts with order:', error);
+      // Fallback query without explicit ordering if column case differs
+      let fallbackQuery = supabase.from('posts').select('*').ilike('status', 'published');
+      if (tag) fallbackQuery = fallbackQuery.ilike('tags', `%${tag}%`);
+      const { data: fallbackData } = await fallbackQuery;
+      return fallbackData || [];
     }
     return data || [];
   } catch (error) {
@@ -22,8 +26,8 @@ export async function getPostBySlug(slug: string) {
       .from('posts')
       .select('*')
       .eq('slug', slug)
-      .eq('status', 'PUBLISHED')
-      .single();
+      .ilike('status', 'published')
+      .maybeSingle();
     if (error) {
       console.error('Error fetching post by slug:', error);
       return null;
