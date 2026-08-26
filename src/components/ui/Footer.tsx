@@ -34,7 +34,7 @@ export function Footer() {
         {/* Right: View Source & Links */}
         <div className="flex items-center gap-4">
           <a
-            href="https://github.com/anurag/cyber-portfolio-blog"
+            href="https://github.com/anur1g5473/cyberlog"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-terminal-green/30 bg-terminal-green/5 text-terminal-green hover:bg-terminal-green/15 transition shadow-sm"

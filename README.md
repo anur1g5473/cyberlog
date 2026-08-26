@@ -50,7 +50,7 @@ To spin up a local instance of CyberLog, follow the initialization sequence belo
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/cyberlog.git
+git clone https://github.com/anur1g5473/cyberlog.git
 cd cyberlog
 ```
 

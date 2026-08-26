@@ -1,5 +1,5 @@
 import { SignJWT, jwtVerify } from 'jose';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 
 const COOKIE_NAME = 'admin_session';
 const JWT_SECRET_KEY = new TextEncoder().encode(
@@ -12,6 +12,19 @@ export interface AdminSessionPayload {
   exp: number;
 }
 
+async function isSecureHttps(): Promise<boolean> {
+  if (process.env.NODE_ENV !== 'production') return false;
+  try {
+    const headerList = await headers();
+    const host = headerList.get('host') || '';
+    const proto = headerList.get('x-forwarded-proto') || '';
+    if (host.includes('localhost') || host.includes('127.0.0.1')) return false;
+    return proto === 'https' || process.env.VERCEL === '1';
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Creates an encrypted JWT session cookie for authenticated admin.
  */
@@ -22,10 +35,11 @@ export async function createAdminSession(): Promise<string> {
     .setExpirationTime('24h')
     .sign(JWT_SECRET_KEY);
 
+  const secure = await isSecureHttps();
   const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure,
     sameSite: 'lax',
     path: '/',
     maxAge: 24 * 60 * 60, // 24 hours
@@ -55,12 +69,14 @@ export async function verifyAdminSession(): Promise<boolean> {
  * Destroys the admin session cookie on logout.
  */
 export async function clearAdminSession(): Promise<void> {
+  const secure = await isSecureHttps();
   const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, '', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure,
     sameSite: 'lax',
     path: '/',
     maxAge: 0,
   });
 }
+
