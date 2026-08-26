@@ -64,6 +64,14 @@ This log tracks the security architecture, implementation details, real bugs enc
   1. Updated database query to `.ilike('status', 'published')` for case-insensitive matching.
   2. Added `revalidatePath('/blog')`, `revalidatePath('/')`, and `revalidatePath('/admin/dashboard')` inside our API endpoints when a post is created, edited, or deleted.
 
+[BUG 5] Insecure Fallback Passwords & Legacy Database URLs in Code
+- What happened: Code contained fallback values like `process.env.DATABASE_URL || 'file:./dev.db'` (leftover from Prisma/SQLite) and hardcoded secret fallbacks in `env.ts` and `session.ts`.
+- Why it happened: During prototype development / rapid prototyping ("vibecoding"), fallback strings were added to prevent runtime crashes when `.env` wasn't loaded. However, keeping default secrets or passwords (e.g. `admin123`) in source code is a critical vulnerability if published to GitHub.
+- How we fixed it:
+  1. Purged all hardcoded fallback passwords and legacy `DATABASE_URL` references from `env.ts`, `passphrase.ts`, `session.ts`, and `supabase.ts`.
+  2. Implemented strict environment validation via `validateEnv()` so missing secrets trigger clear console warnings without exposing dummy fallback secrets in code.
+
+
 --------------------------------------------------------------------
 3. FUTURE REVISION & STUDY NOTES
 --------------------------------------------------------------------

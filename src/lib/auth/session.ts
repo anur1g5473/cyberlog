@@ -1,10 +1,16 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies, headers } from 'next/headers';
+import { env } from '../config/env';
 
 const COOKIE_NAME = 'admin_session';
-const JWT_SECRET_KEY = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'super-secret-cybersecurity-admin-jwt-key-2026-secure-random'
-);
+
+function getJwtSecretKey(): Uint8Array {
+  const secret = process.env.JWT_SECRET || env.JWT_SECRET;
+  if (!secret) {
+    console.warn('[SECURITY WARNING] JWT_SECRET is not defined in environment variables.');
+  }
+  return new TextEncoder().encode(secret || 'jwt_secret_must_be_configured_in_env');
+}
 
 export interface AdminSessionPayload {
   role: 'admin';
@@ -29,11 +35,12 @@ async function isSecureHttps(): Promise<boolean> {
  * Creates an encrypted JWT session cookie for authenticated admin.
  */
 export async function createAdminSession(): Promise<string> {
+  const secretKey = getJwtSecretKey();
   const token = await new SignJWT({ role: 'admin' })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('24h')
-    .sign(JWT_SECRET_KEY);
+    .sign(secretKey);
 
   const secure = await isSecureHttps();
   const cookieStore = await cookies();
@@ -58,7 +65,8 @@ export async function verifyAdminSession(): Promise<boolean> {
 
     if (!token) return false;
 
-    const { payload } = await jwtVerify(token, JWT_SECRET_KEY);
+    const secretKey = getJwtSecretKey();
+    const { payload } = await jwtVerify(token, secretKey);
     return payload.role === 'admin';
   } catch (err) {
     return false;
