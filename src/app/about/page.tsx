@@ -1,14 +1,45 @@
-import React from 'react';
+﻿import React from 'react';
 import Link from 'next/link';
 import { TerminalWindow } from '@/components/ui/TerminalWindow';
 import { TypedCommand } from '@/components/ui/TypedCommand';
-import { User, Server, Shield, Code, Cpu, Mail, Linkedin, Github, ArrowRight } from 'lucide-react';
-import { getContactDetails } from '@/lib/db/contact';
+import { User, Shield, Mail, Linkedin, Github, MessageSquare, Globe, Hash, Radio, ArrowRight } from 'lucide-react';
+import { getContactDetails, ContactChannel, buildDefaultChannels } from '@/lib/db/contact';
 
 export const revalidate = 60;
 
+function getChannelIcon(platform: string) {
+  switch (platform?.toLowerCase()) {
+    case 'email':
+      return <Mail className="w-4 h-4 text-terminal-green" />;
+    case 'linkedin':
+      return <Linkedin className="w-4 h-4 text-blue-400" />;
+    case 'github':
+      return <Github className="w-4 h-4 text-terminal-green" />;
+    case 'discord':
+      return <MessageSquare className="w-4 h-4 text-indigo-400" />;
+    case 'twitter':
+    case 'x':
+      return <Hash className="w-4 h-4 text-sky-400" />;
+    case 'telegram':
+    case 'signal':
+    case 'matrix':
+      return <Radio className="w-4 h-4 text-cyan-400" />;
+    default:
+      return <Globe className="w-4 h-4 text-terminal-green" />;
+  }
+}
+
 export default async function AboutPage() {
   const contact = await getContactDetails();
+
+  const allChannels = (contact.channels && contact.channels.length > 0)
+    ? contact.channels
+    : buildDefaultChannels(contact);
+
+  const visibleChannels: ContactChannel[] = allChannels.filter(
+    (c) => c.visible !== false && c.value && c.value.trim() !== ''
+  );
+
   return (
     <div className="space-y-8">
       <TypedCommand command="cat ./about.md" prefix="user@cyberlog:~$" />
@@ -21,11 +52,11 @@ export default async function AboutPage() {
               <span>{contact.name || 'Anurag'} // Profile</span>
             </h1>
             <p>
-              Hey, I&apos;m {contact.name || 'Anurag'}. I&apos;m a {contact.title || 'Cybersecurity Engineer and Full-Stack Web Developer'}. 
+              Hey, I&apos;m {contact.name || 'Anurag'}. I&apos;m a {contact.title || 'Cybersecurity Engineer and Full-Stack Web Developer'}.{' '}
               {contact.bio || 'My expertise lies in bridging the gap between secure engineering and modern web infrastructure.'}
             </p>
             <p>
-              I spend most of my time auditing web applications, writing defensive security tools, 
+              I spend most of my time auditing web applications, writing defensive security tools,
               participating in Catch-The-Flag (CTF) events, and finding vulnerabilities before bad actors do.
             </p>
           </section>
@@ -41,15 +72,15 @@ export default async function AboutPage() {
                 <ul className="space-y-1 text-terminal-muted">
                   <li>- Web Vulnerability Research (OWASP)</li>
                   <li>- Network Penetration Testing</li>
-                  <li>- CTF Forensics & Reversing</li>
+                  <li>- CTF Forensics &amp; Reversing</li>
                 </ul>
               </div>
               <div className="p-3 rounded border border-terminal-amber/20 bg-terminal-amber/5">
                 <div className="text-terminal-amber font-bold mb-2">&gt; Defensive Engineering</div>
                 <ul className="space-y-1 text-terminal-muted">
                   <li>- Zero-Trust Architecture</li>
-                  <li>- Auth & Cryptography Standards</li>
-                  <li>- Rate-Limiting & WAF Rule Dev</li>
+                  <li>- Auth &amp; Cryptography Standards</li>
+                  <li>- Rate-Limiting &amp; WAF Rule Dev</li>
                 </ul>
               </div>
               <div className="p-3 rounded border border-cyan-500/20 bg-cyan-500/5">
@@ -64,7 +95,7 @@ export default async function AboutPage() {
                 <div className="text-purple-400 font-bold mb-2">&gt; Infrastructure</div>
                 <ul className="space-y-1 text-terminal-muted">
                   <li>- Linux System Admin</li>
-                  <li>- Docker & Container Security</li>
+                  <li>- Docker &amp; Container Security</li>
                   <li>- Automated CI/CD Pipelines</li>
                 </ul>
               </div>
@@ -77,53 +108,28 @@ export default async function AboutPage() {
               <span>Communication &amp; Identity Endpoints</span>
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <a
-                href={`mailto:${contact.officialEmail}`}
-                className="p-3 rounded border border-terminal-green/20 bg-black/40 hover:border-terminal-green/50 transition flex items-center justify-between"
-              >
-                <div>
-                  <div className="text-terminal-green font-bold text-[11px]">Official Email</div>
-                  <div className="text-terminal-muted text-[11px]">{contact.officialEmail}</div>
-                </div>
-                <Mail className="w-4 h-4 text-terminal-green" />
-              </a>
+              {visibleChannels.map((channel) => {
+                const isEmail = channel.type === 'email' || channel.platform === 'email' || channel.value.includes('@');
+                const isUrl = channel.value.startsWith('http://') || channel.value.startsWith('https://');
+                const href = isEmail ? `mailto:${channel.value}` : isUrl ? channel.value : `/contact`;
+                const displayVal = channel.value.replace(/^https?:\/\//, '');
 
-              <a
-                href={`mailto:${contact.vitEmail}`}
-                className="p-3 rounded border border-cyan-500/20 bg-black/40 hover:border-cyan-500/50 transition flex items-center justify-between"
-              >
-                <div>
-                  <div className="text-cyan-400 font-bold text-[11px]">VIT Student Email</div>
-                  <div className="text-terminal-muted text-[11px]">{contact.vitEmail}</div>
-                </div>
-                <Mail className="w-4 h-4 text-cyan-400" />
-              </a>
-
-              <a
-                href={contact.linkedinUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-3 rounded border border-blue-500/20 bg-black/40 hover:border-blue-500/50 transition flex items-center justify-between"
-              >
-                <div>
-                  <div className="text-blue-400 font-bold text-[11px]">LinkedIn</div>
-                  <div className="text-terminal-muted text-[11px]">{contact.linkedinUrl.replace('https://', '')}</div>
-                </div>
-                <Linkedin className="w-4 h-4 text-blue-400" />
-              </a>
-
-              <a
-                href={contact.githubUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-3 rounded border border-terminal-green/20 bg-black/40 hover:border-terminal-green/50 transition flex items-center justify-between"
-              >
-                <div>
-                  <div className="text-terminal-green font-bold text-[11px]">GitHub</div>
-                  <div className="text-terminal-muted text-[11px]">{contact.githubUrl.replace('https://', '')}</div>
-                </div>
-                <Github className="w-4 h-4 text-terminal-green" />
-              </a>
+                return (
+                  <a
+                    key={channel.id}
+                    href={href}
+                    target={isUrl ? '_blank' : undefined}
+                    rel={isUrl ? 'noopener noreferrer' : undefined}
+                    className="p-3 rounded border border-terminal-green/20 bg-black/40 hover:border-terminal-green/50 transition flex items-center justify-between"
+                  >
+                    <div className="min-w-0 pr-2">
+                      <div className="text-terminal-green font-bold text-[11px] truncate">{channel.label}</div>
+                      <div className="text-terminal-muted text-[11px] truncate">{displayVal}</div>
+                    </div>
+                    {getChannelIcon(channel.platform)}
+                  </a>
+                );
+              })}
             </div>
 
             <div className="pt-2 text-right">
@@ -141,4 +147,3 @@ export default async function AboutPage() {
     </div>
   );
 }
-
