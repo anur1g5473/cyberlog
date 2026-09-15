@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
-import { Mail, Linkedin, Github, Copy, Check, ExternalLink, ShieldCheck, Send, Terminal, Edit3 } from 'lucide-react';
+import { Mail, Linkedin, Github, Copy, Check, ExternalLink, ShieldCheck, Send, Terminal } from 'lucide-react';
 import { ContactDetails } from '@/lib/db/contact';
 
 export function ContactClientView({ initialContact }: { initialContact: ContactDetails }) {
@@ -117,7 +116,7 @@ export function ContactClientView({ initialContact }: { initialContact: ContactD
 
       <div className="flex justify-between items-center pt-2 border-t border-terminal-green/10 text-[11px]">
         <span className="text-terminal-muted">Response SLA: &lt; 24 hrs for security inquiries</span>
-        <Link href="/admin/contact" className="text-terminal-green hover:underline flex items-center gap-1"><Edit3 className="w-3 h-3" /> Admin Settings</Link>
+        <span className="text-terminal-muted/60 text-[10px]">End-to-End Encrypted Communication</span>
       </div>
     </div>
   );
