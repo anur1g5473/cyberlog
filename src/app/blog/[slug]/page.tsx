@@ -7,6 +7,8 @@ import { TypedCommand } from '@/components/ui/TypedCommand';
 import { TagPill } from '@/components/ui/TagPill';
 import { CodeBlock } from '@/components/ui/CodeBlock';
 import { formatDate } from '@/lib/utils/dateFormatter';
+import { parseBlogTags } from '@/lib/utils/tagUtils';
+import { preprocessBlogMarkdown } from '@/lib/utils/markdownUtils';
 import { Clock, ArrowLeft } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -24,7 +26,8 @@ export default async function PostPage({ params }: PostPageProps) {
     notFound();
   }
 
-  const tagList = post.tags ? post.tags.split(',').map((t: string) => t.trim()) : [];
+  const tagList = parseBlogTags(post.tags);
+  const formattedContent = preprocessBlogMarkdown(post.content || '');
 
   return (
     <article className="space-y-8">
@@ -80,23 +83,49 @@ export default async function PostPage({ params }: PostPageProps) {
                   );
                 },
                 h1: ({ children }) => (
-                  <h1 className="text-xl font-bold font-mono text-terminal-green border-b border-terminal-green/20 pb-2 mt-6 mb-4">
-                    {children}
+                  <h1 className="text-2xl font-bold font-mono text-terminal-green border-b border-terminal-green/30 pb-2 mt-8 mb-4 flex items-center gap-2">
+                    <span className="text-terminal-green/50">#</span> {children}
                   </h1>
                 ),
                 h2: ({ children }) => (
-                  <h2 className="text-lg font-bold font-mono text-terminal-text mt-6 mb-3 flex items-center gap-2">
-                    <span className="text-terminal-green">&gt;</span> {children}
+                  <h2 className="text-xl font-bold font-mono text-terminal-text mt-7 mb-3 flex items-center gap-2">
+                    <span className="text-terminal-green">##</span> {children}
                   </h2>
                 ),
                 h3: ({ children }) => (
-                  <h3 className="text-base font-bold font-mono text-terminal-muted mt-4 mb-2">
-                    {children}
+                  <h3 className="text-lg font-bold font-mono text-terminal-green/90 mt-6 mb-2 flex items-center gap-2">
+                    <span className="text-terminal-green/60">###</span> {children}
                   </h3>
                 ),
-                p: ({ children }) => <p className="text-terminal-text/90 leading-relaxed">{children}</p>,
-                ul: ({ children }) => <ul className="list-disc list-inside space-y-1 pl-2 text-terminal-text/90">{children}</ul>,
-                ol: ({ children }) => <ol className="list-decimal list-inside space-y-1 pl-2 text-terminal-text/90">{children}</ol>,
+                h4: ({ children }) => (
+                  <h4 className="text-base font-semibold font-mono text-terminal-muted mt-5 mb-2 flex items-center gap-2">
+                    <span className="text-terminal-green/40">####</span> {children}
+                  </h4>
+                ),
+                h5: ({ children }) => (
+                  <h5 className="text-sm font-semibold font-mono text-terminal-muted mt-4 mb-1 flex items-center gap-2">
+                    <span className="text-terminal-green/30">#####</span> {children}
+                  </h5>
+                ),
+                h6: ({ children }) => (
+                  <h6 className="text-xs font-semibold font-mono text-terminal-muted mt-3 mb-1 uppercase tracking-wider">
+                    {children}
+                  </h6>
+                ),
+                p: ({ children }) => <p className="text-terminal-text/90 leading-relaxed my-3">{children}</p>,
+                ul: ({ children }) => <ul className="space-y-1.5 my-3 pl-1">{children}</ul>,
+                ol: ({ children }) => <ol className="list-decimal space-y-1.5 my-3 pl-6 text-terminal-text/90">{children}</ol>,
+                li: ({ children }) => (
+                  <li className="flex items-start gap-2 text-terminal-text/90">
+                    <span className="text-terminal-green select-none mt-1 font-mono text-xs">▸</span>
+                    <span className="flex-1">{children}</span>
+                  </li>
+                ),
+                blockquote: ({ children }) => (
+                  <blockquote className="border-l-2 border-terminal-green pl-4 my-4 italic text-terminal-muted bg-terminal-green/5 py-1 rounded-r">
+                    {children}
+                  </blockquote>
+                ),
                 table: ({ children }) => (
                   <div className="overflow-x-auto my-4 border border-terminal-green/20 rounded-lg">
                     <table className="w-full text-left font-mono text-xs border-collapse">{children}</table>
@@ -106,14 +135,14 @@ export default async function PostPage({ params }: PostPageProps) {
                 td: ({ children }) => <td className="p-2 border-b border-terminal-green/10 text-terminal-text">{children}</td>,
               }}
             >
-              {post.content}
+              {formattedContent}
             </ReactMarkdown>
           </div>
 
           <div className="pt-6 border-t border-terminal-green/20 flex flex-wrap items-center justify-between gap-4 font-mono text-xs">
             <div className="flex flex-wrap gap-1.5">
-              {tagList.map((tag: string) => (
-                <TagPill key={tag} tag={tag} />
+              {tagList.map((tag) => (
+                <TagPill key={tag.name} tag={tag} />
               ))}
             </div>
             <Link

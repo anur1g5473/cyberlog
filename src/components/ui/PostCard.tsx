@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { TagPill } from './TagPill';
 import { formatDate } from '@/lib/utils/dateFormatter';
+import { parseBlogTags } from '@/lib/utils/tagUtils';
 import { Clock, ArrowRight, BookOpen } from 'lucide-react';
 
 export interface PostData {
@@ -9,7 +10,7 @@ export interface PostData {
   title: string;
   slug: string;
   excerpt?: string | null;
-  tags: string;
+  tags: string | any;
   difficulty: string;
   readingTime: number;
   createdAt: Date | string;
@@ -20,10 +21,10 @@ interface PostCardProps {
 }
 
 export function PostCard({ post }: PostCardProps) {
-  const tagList = post.tags ? post.tags.split(',').map((t) => t.trim()) : [];
+  const tagList = parseBlogTags(post.tags);
 
   const getDifficultyBadge = (diff: string) => {
-    switch (diff.toLowerCase()) {
+    switch (diff?.toLowerCase()) {
       case 'beginner':
         return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
       case 'intermediate':
@@ -61,14 +62,16 @@ export function PostCard({ post }: PostCardProps) {
         </h3>
       </Link>
 
-      <p className="text-sm text-terminal-muted font-sans mt-2 line-clamp-2 leading-relaxed">
-        {post.excerpt}
-      </p>
+      {post.excerpt && (
+        <p className="text-sm text-terminal-muted font-sans mt-2 line-clamp-2 leading-relaxed">
+          {post.excerpt}
+        </p>
+      )}
 
       <div className="flex flex-wrap items-center justify-between gap-3 mt-4 pt-4 border-t border-terminal-green/10">
         <div className="flex flex-wrap gap-1.5">
           {tagList.map((tag) => (
-            <TagPill key={tag} tag={tag} />
+            <TagPill key={tag.name} tag={tag} />
           ))}
         </div>
 
@@ -83,3 +86,4 @@ export function PostCard({ post }: PostCardProps) {
     </article>
   );
 }
+
