@@ -2,21 +2,12 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 
-const TRAIL_LENGTH = 7;
-
 export function CustomCursor() {
   const [isVisible, setIsVisible] = useState(false);
   const [isHoveringClickable, setIsHoveringClickable] = useState(false);
   const [isClicking, setIsClicking] = useState(false);
 
-  const mousePos = useRef({ x: -100, y: -100 });
-  const trailRef = useRef(
-    Array.from({ length: TRAIL_LENGTH }, () => ({ x: -100, y: -100 }))
-  );
-  const animFrameId = useRef<number | null>(null);
-
-  const cursorDotRef = useRef<HTMLDivElement>(null);
-  const trailDotsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const cursorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -27,7 +18,10 @@ export function CustomCursor() {
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!isVisible) setIsVisible(true);
-      mousePos.current = { x: e.clientX, y: e.clientY };
+      
+      if (cursorRef.current) {
+        cursorRef.current.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`;
+      }
 
       const target = e.target as HTMLElement | null;
       if (target) {
@@ -62,37 +56,6 @@ export function CustomCursor() {
     document.addEventListener('mouseleave', handleMouseLeave);
     document.addEventListener('mouseenter', handleMouseEnter);
 
-    const animate = () => {
-      const targetX = mousePos.current.x;
-      const targetY = mousePos.current.y;
-
-      if (cursorDotRef.current) {
-        cursorDotRef.current.style.transform = `translate3d(${targetX}px, ${targetY}px, 0)`;
-      }
-
-      let prevX = targetX;
-      let prevY = targetY;
-
-      for (let i = 0; i < TRAIL_LENGTH; i++) {
-        const node = trailRef.current[i];
-        const lerpFactor = 0.5 - i * 0.04;
-        node.x += (prevX - node.x) * Math.max(lerpFactor, 0.22);
-        node.y += (prevY - node.y) * Math.max(lerpFactor, 0.22);
-
-        const el = trailDotsRef.current[i];
-        if (el) {
-          el.style.transform = `translate3d(${node.x}px, ${node.y}px, 0)`;
-        }
-
-        prevX = node.x;
-        prevY = node.y;
-      }
-
-      animFrameId.current = requestAnimationFrame(animate);
-    };
-
-    animFrameId.current = requestAnimationFrame(animate);
-
     return () => {
       document.documentElement.classList.remove('custom-cursor-active');
       window.removeEventListener('mousemove', handleMouseMove);
@@ -100,52 +63,26 @@ export function CustomCursor() {
       window.removeEventListener('mouseup', handleMouseUp);
       document.removeEventListener('mouseleave', handleMouseLeave);
       document.removeEventListener('mouseenter', handleMouseEnter);
-      if (animFrameId.current) cancelAnimationFrame(animFrameId.current);
     };
   }, [isVisible]);
 
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-[99999] overflow-hidden select-none">
-      {/* 1. Trailing Phosphor Nodes */}
-      {Array.from({ length: TRAIL_LENGTH }).map((_, idx) => {
-        const size = Math.max(6 - idx * 0.7, 2);
-        const opacity = Math.max(0.6 - idx * 0.08, 0.06);
-
-        return (
-          <div
-            key={idx}
-            ref={(el) => {
-              trailDotsRef.current[idx] = el;
-            }}
-            className={`fixed top-0 left-0 rounded-full transition-colors duration-150 pointer-events-none ${
-              isHoveringClickable
-                ? 'bg-terminal-red shadow-[0_0_8px_#ff3b3b]'
-                : 'bg-terminal-green shadow-[0_0_8px_#00ff41]'
-            }`}
-            style={{
-              width: `${size}px`,
-              height: `${size}px`,
-              marginLeft: `-${size / 2}px`,
-              marginTop: `-${size / 2}px`,
-              opacity: opacity,
-              willChange: 'transform',
-            }}
-          />
-        );
-      })}
-
-      {/* 2. Main Glowing Center Dot */}
+    <div
+      ref={cursorRef}
+      className="fixed top-0 left-0 pointer-events-none z-[99999] -translate-x-1/2 -translate-y-1/2 select-none will-change-transform"
+      style={{ willChange: 'transform' }}
+    >
+      {/* Primary Glowing Hacker Cursor Dot */}
       <div
-        ref={cursorDotRef}
-        className={`fixed top-0 left-0 rounded-full pointer-events-none transition-all duration-150 ${
+        className={`rounded-full transition-[background-color,box-shadow,transform] duration-150 ease-out pointer-events-none ${
           isHoveringClickable
-            ? 'w-3 h-3 -ml-1.5 -mt-1.5 bg-terminal-red shadow-[0_0_12px_#ff3b3b,0_0_24px_#ff3b3b]'
-            : 'w-2.5 h-2.5 -ml-[5px] -mt-[5px] bg-terminal-green shadow-[0_0_10px_#00ff41,0_0_20px_#00ff41]'
-        } ${isClicking ? 'scale-125' : ''}`}
-        style={{ willChange: 'transform' }}
+            ? 'w-5 h-5 bg-terminal-red shadow-[0_0_14px_#ff3b3b,0_0_28px_rgba(255,59,59,0.7)] scale-125'
+            : 'w-4 h-4 bg-terminal-green shadow-[0_0_12px_#00ff41,0_0_24px_rgba(0,255,65,0.7)] scale-100'
+        } ${isClicking ? 'scale-90' : ''}`}
       />
     </div>
   );
 }
+
