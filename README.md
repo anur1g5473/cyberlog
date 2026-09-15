@@ -118,6 +118,25 @@ CREATE TABLE public.projects (
     "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- Create the Contact & Identity Endpoints Table
+CREATE TABLE public.contact_details (
+    id TEXT PRIMARY KEY DEFAULT 'default',
+    name TEXT NOT NULL,
+    title TEXT NOT NULL,
+    "vitEmail" TEXT NOT NULL,
+    "officialEmail" TEXT NOT NULL,
+    "linkedinUrl" TEXT NOT NULL,
+    "githubUrl" TEXT NOT NULL,
+    location TEXT,
+    bio TEXT,
+    "availableFor" TEXT,
+    "pgpKey" TEXT,
+    "pgpKeyFingerprint" TEXT,
+    "twitterUrl" TEXT,
+    "discordUsername" TEXT,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- Create the Login Attempts Table (Security Lockout Engine)
 CREATE TABLE public.login_attempts (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -126,6 +145,21 @@ CREATE TABLE public.login_attempts (
     "lockedUntil" TIMESTAMP WITH TIME ZONE,
     "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+-- Insert Default Contact Row
+INSERT INTO public.contact_details (id, name, title, "vitEmail", "officialEmail", "linkedinUrl", "githubUrl", location, "availableFor")
+VALUES (
+    'default',
+    'Anurag Soni',
+    'Cybersecurity Engineer & Full-Stack Developer',
+    'anurag.soni2025@vitstudent.ac.in',
+    'anuragsoni5473@gmail.com',
+    'https://www.linkedin.com/in/anur1gsoni/',
+    'https://github.com/anur1g5473',
+    'Vellore / India',
+    'Security Audits, Vulnerability Research & Development Collaborations'
+)
+ON CONFLICT (id) DO NOTHING;
 ```
 
 </details>

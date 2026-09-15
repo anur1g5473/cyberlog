@@ -12,7 +12,7 @@
 body {
   background-color: var(--bg-main);
   color: #e0e0e0;
-  font-family: 'Fira Code', 'JetBrains Mono', Courier, monospace;
+  font-family: var(--font-fira-code), 'Fira Code', 'JetBrains Mono', Courier, monospace;
   overflow-x: hidden;
   background-image: 
     radial-gradient(rgba(0, 255, 65, 0.05) 1px, transparent 1px),
@@ -42,3 +42,13 @@ body {
   background: rgba(0, 255, 65, 0.3);
   color: #00ff41;
 }
+
+/* Custom Cursor Desktop Overrides */
+@media (hover: hover) and (pointer: fine) {
+  html.custom-cursor-active,
+  html.custom-cursor-active * {
+    cursor: none !important;
+  }
+}
+
+

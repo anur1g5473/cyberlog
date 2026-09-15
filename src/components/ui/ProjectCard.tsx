@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 import { TagPill } from './TagPill';
 import { Github, ExternalLink, ShieldCheck, FolderGit2 } from 'lucide-react';

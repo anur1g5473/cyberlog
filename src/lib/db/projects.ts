@@ -59,6 +59,25 @@ export async function getFeaturedProjects() {
 }
 
 /**
+ * Fetches single project by ID.
+ */
+export async function getProjectById(id: string) {
+  try {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error fetching project by id:', error);
+    return null;
+  }
+}
+
+/**
  * Creates new project card.
  */
 export async function createProject(input: CreateProjectInput) {
@@ -112,4 +131,5 @@ export async function deleteProject(id: string) {
   if (error) throw error;
   return { success: true };
 }
+
 

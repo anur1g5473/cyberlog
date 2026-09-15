@@ -21,12 +21,25 @@ export function TagPill({ tag, onClick, active = false }: TagPillProps) {
 
   const baseStyle = getTagColorClass(tag);
 
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={() => onClick(tag)}
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-mono border transition-all duration-200 cursor-pointer hover:scale-105 ${
+          active
+            ? 'bg-terminal-green text-black border-terminal-green font-bold shadow-[0_0_8px_rgba(0,255,65,0.5)]'
+            : baseStyle
+        }`}
+      >
+        #{tag.trim()}
+      </button>
+    );
+  }
+
   return (
     <span
-      onClick={() => onClick && onClick(tag)}
       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-mono border transition-all duration-200 ${
-        onClick ? 'cursor-pointer hover:scale-105' : ''
-      } ${
         active
           ? 'bg-terminal-green text-black border-terminal-green font-bold shadow-[0_0_8px_rgba(0,255,65,0.5)]'
           : baseStyle
@@ -36,3 +49,4 @@ export function TagPill({ tag, onClick, active = false }: TagPillProps) {
     </span>
   );
 }
+

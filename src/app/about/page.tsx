@@ -1,7 +1,8 @@
 import React from 'react';
+import Link from 'next/link';
 import { TerminalWindow } from '@/components/ui/TerminalWindow';
 import { TypedCommand } from '@/components/ui/TypedCommand';
-import { User, Server, Shield, Code, Cpu } from 'lucide-react';
+import { User, Server, Shield, Code, Cpu, Mail, Linkedin, Github, ArrowRight } from 'lucide-react';
 
 export default function AboutPage() {
   return (
@@ -63,6 +64,72 @@ export default function AboutPage() {
                   <li>- Automated CI/CD Pipelines</li>
                 </ul>
               </div>
+            </div>
+          </section>
+
+          <section className="space-y-3 pt-4 border-t border-terminal-green/20 font-mono text-xs">
+            <h3 className="font-bold text-terminal-green flex items-center gap-2">
+              <Mail className="w-4 h-4" />
+              <span>Communication &amp; Identity Endpoints</span>
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <a
+                href="mailto:anuragsoni5473@gmail.com"
+                className="p-3 rounded border border-terminal-green/20 bg-black/40 hover:border-terminal-green/50 transition flex items-center justify-between"
+              >
+                <div>
+                  <div className="text-terminal-green font-bold text-[11px]">Official Email</div>
+                  <div className="text-terminal-muted text-[11px]">anuragsoni5473@gmail.com</div>
+                </div>
+                <Mail className="w-4 h-4 text-terminal-green" />
+              </a>
+
+              <a
+                href="mailto:anurag.soni2025@vitstudent.ac.in"
+                className="p-3 rounded border border-cyan-500/20 bg-black/40 hover:border-cyan-500/50 transition flex items-center justify-between"
+              >
+                <div>
+                  <div className="text-cyan-400 font-bold text-[11px]">VIT Student Email</div>
+                  <div className="text-terminal-muted text-[11px]">anurag.soni2025@vitstudent.ac.in</div>
+                </div>
+                <Mail className="w-4 h-4 text-cyan-400" />
+              </a>
+
+              <a
+                href="https://www.linkedin.com/in/anur1gsoni/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-3 rounded border border-blue-500/20 bg-black/40 hover:border-blue-500/50 transition flex items-center justify-between"
+              >
+                <div>
+                  <div className="text-blue-400 font-bold text-[11px]">LinkedIn</div>
+                  <div className="text-terminal-muted text-[11px]">anur1gsoni</div>
+                </div>
+                <Linkedin className="w-4 h-4 text-blue-400" />
+              </a>
+
+              <a
+                href="https://github.com/anur1g5473"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-3 rounded border border-terminal-green/20 bg-black/40 hover:border-terminal-green/50 transition flex items-center justify-between"
+              >
+                <div>
+                  <div className="text-terminal-green font-bold text-[11px]">GitHub</div>
+                  <div className="text-terminal-muted text-[11px]">anur1g5473</div>
+                </div>
+                <Github className="w-4 h-4 text-terminal-green" />
+              </a>
+            </div>
+
+            <div className="pt-2 text-right">
+              <Link
+                href="/contact"
+                className="inline-flex items-center gap-1.5 text-terminal-green hover:underline text-xs font-bold"
+              >
+                <span>Open Interactive Contact Matrix</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
           </section>
         </div>

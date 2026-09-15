@@ -1,7 +1,7 @@
 import { PostCard } from '@/components/ui/PostCard';
 import { getPublishedPosts } from '@/lib/db/posts';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 export default async function BlogPage() {
   const posts = await getPublishedPosts();

@@ -11,7 +11,7 @@ import { Clock, ArrowLeft } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 interface PostPageProps {
   params: { slug: string };

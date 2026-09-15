@@ -26,8 +26,8 @@ module.exports = {
         },
       },
       fontFamily: {
-        mono: ['Fira Code', 'JetBrains Mono', 'Courier New', 'monospace'],
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-fira-code)', 'Fira Code', 'JetBrains Mono', 'Courier New', 'monospace'],
+        sans: ['var(--font-inter)', 'Inter', 'system-ui', 'sans-serif'],
       },
       animation: {
         'blink': 'blink 1s step-end infinite',

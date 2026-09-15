@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 import Link from 'next/link';
 import { Github, Shield, Terminal } from 'lucide-react';
@@ -32,19 +30,33 @@ export function Footer() {
         </div>
 
         {/* Right: View Source & Links */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 flex-wrap">
+          <a
+            href="https://www.linkedin.com/in/anur1gsoni/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-blue-500/30 bg-blue-500/5 text-blue-400 hover:bg-blue-500/15 transition shadow-sm text-[11px]"
+          >
+            <span>LinkedIn</span>
+          </a>
           <a
             href="https://github.com/anur1g5473/cyberlog"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-terminal-green/30 bg-terminal-green/5 text-terminal-green hover:bg-terminal-green/15 transition shadow-sm"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-terminal-green/30 bg-terminal-green/5 text-terminal-green hover:bg-terminal-green/15 transition shadow-sm text-[11px]"
           >
-            <Github className="w-4 h-4" />
-            <span>view source</span>
+            <Github className="w-3.5 h-3.5" />
+            <span>GitHub</span>
           </a>
           <Link
+            href="/contact"
+            className="text-terminal-muted hover:text-terminal-green transition text-[11px]"
+          >
+            Contact
+          </Link>
+          <Link
             href="/admin/login"
-            className="text-terminal-muted hover:text-terminal-red transition flex items-center gap-1"
+            className="text-terminal-muted hover:text-terminal-red transition flex items-center gap-1 text-[11px]"
           >
             <Terminal className="w-3.5 h-3.5" />
             <span>sys_admin</span>
