@@ -3,8 +3,12 @@ import Link from 'next/link';
 import { TerminalWindow } from '@/components/ui/TerminalWindow';
 import { TypedCommand } from '@/components/ui/TypedCommand';
 import { User, Server, Shield, Code, Cpu, Mail, Linkedin, Github, ArrowRight } from 'lucide-react';
+import { getContactDetails } from '@/lib/db/contact';
 
-export default function AboutPage() {
+export const revalidate = 60;
+
+export default async function AboutPage() {
+  const contact = await getContactDetails();
   return (
     <div className="space-y-8">
       <TypedCommand command="cat ./about.md" prefix="user@cyberlog:~$" />
@@ -14,11 +18,11 @@ export default function AboutPage() {
           <section className="space-y-4">
             <h1 className="text-xl font-bold font-mono text-terminal-green flex items-center gap-2 border-b border-terminal-green/20 pb-2">
               <User className="w-5 h-5" />
-              <span>Anurag // Profile</span>
+              <span>{contact.name || 'Anurag'} // Profile</span>
             </h1>
             <p>
-              Hey, I&apos;m Anurag. I&apos;m a Cybersecurity Engineer and Full-Stack Web Developer. 
-              My expertise lies in bridging the gap between secure engineering and modern web infrastructure.
+              Hey, I&apos;m {contact.name || 'Anurag'}. I&apos;m a {contact.title || 'Cybersecurity Engineer and Full-Stack Web Developer'}. 
+              {contact.bio || 'My expertise lies in bridging the gap between secure engineering and modern web infrastructure.'}
             </p>
             <p>
               I spend most of my time auditing web applications, writing defensive security tools, 
@@ -74,49 +78,49 @@ export default function AboutPage() {
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <a
-                href="mailto:anuragsoni5473@gmail.com"
+                href={`mailto:${contact.officialEmail}`}
                 className="p-3 rounded border border-terminal-green/20 bg-black/40 hover:border-terminal-green/50 transition flex items-center justify-between"
               >
                 <div>
                   <div className="text-terminal-green font-bold text-[11px]">Official Email</div>
-                  <div className="text-terminal-muted text-[11px]">anuragsoni5473@gmail.com</div>
+                  <div className="text-terminal-muted text-[11px]">{contact.officialEmail}</div>
                 </div>
                 <Mail className="w-4 h-4 text-terminal-green" />
               </a>
 
               <a
-                href="mailto:anurag.soni2025@vitstudent.ac.in"
+                href={`mailto:${contact.vitEmail}`}
                 className="p-3 rounded border border-cyan-500/20 bg-black/40 hover:border-cyan-500/50 transition flex items-center justify-between"
               >
                 <div>
                   <div className="text-cyan-400 font-bold text-[11px]">VIT Student Email</div>
-                  <div className="text-terminal-muted text-[11px]">anurag.soni2025@vitstudent.ac.in</div>
+                  <div className="text-terminal-muted text-[11px]">{contact.vitEmail}</div>
                 </div>
                 <Mail className="w-4 h-4 text-cyan-400" />
               </a>
 
               <a
-                href="https://www.linkedin.com/in/anur1gsoni/"
+                href={contact.linkedinUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-3 rounded border border-blue-500/20 bg-black/40 hover:border-blue-500/50 transition flex items-center justify-between"
               >
                 <div>
                   <div className="text-blue-400 font-bold text-[11px]">LinkedIn</div>
-                  <div className="text-terminal-muted text-[11px]">anur1gsoni</div>
+                  <div className="text-terminal-muted text-[11px]">{contact.linkedinUrl.replace('https://', '')}</div>
                 </div>
                 <Linkedin className="w-4 h-4 text-blue-400" />
               </a>
 
               <a
-                href="https://github.com/anur1g5473"
+                href={contact.githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-3 rounded border border-terminal-green/20 bg-black/40 hover:border-terminal-green/50 transition flex items-center justify-between"
               >
                 <div>
                   <div className="text-terminal-green font-bold text-[11px]">GitHub</div>
-                  <div className="text-terminal-muted text-[11px]">anur1g5473</div>
+                  <div className="text-terminal-muted text-[11px]">{contact.githubUrl.replace('https://', '')}</div>
                 </div>
                 <Github className="w-4 h-4 text-terminal-green" />
               </a>
