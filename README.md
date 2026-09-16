@@ -146,6 +146,35 @@ CREATE TABLE public.login_attempts (
     "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- Create the Now Settings Table (/now Directives)
+CREATE TABLE public.now_settings (
+    id TEXT PRIMARY KEY DEFAULT 'default',
+    headline TEXT NOT NULL,
+    "currentFocus" TEXT NOT NULL,
+    location TEXT NOT NULL,
+    availability TEXT NOT NULL,
+    "lastUpdated" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Create the Now Items Table (/now Activities)
+CREATE TABLE public.now_items (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    category TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'Active',
+    progress INTEGER DEFAULT 50,
+    link TEXT DEFAULT '',
+    "linkText" TEXT DEFAULT '',
+    tags TEXT DEFAULT '[]',
+    "startDate" TEXT DEFAULT '',
+    "targetDate" TEXT DEFAULT '',
+    "order" INTEGER DEFAULT 1,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+
 -- Insert Default Contact Row
 INSERT INTO public.contact_details (id, name, title, "vitEmail", "officialEmail", "linkedinUrl", "githubUrl", location, "availableFor")
 VALUES (

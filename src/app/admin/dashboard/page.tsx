@@ -4,23 +4,41 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { TerminalWindow } from '@/components/ui/TerminalWindow';
-import { Plus, Edit, Trash2, LogOut, ShieldAlert, FolderPlus, FileText, Mail } from 'lucide-react';
+import {
+  Plus,
+  Edit,
+  Trash2,
+  LogOut,
+  ShieldAlert,
+  FolderPlus,
+  FileText,
+  Mail,
+  Activity,
+  ArrowRight,
+  Zap,
+  BookOpen,
+  GraduationCap,
+  Briefcase,
+} from 'lucide-react';
 import { ContactDetails } from '@/lib/db/contact';
+import { NowData } from '@/lib/db/now';
 
 export default function AdminDashboardPage() {
   const [posts, setPosts] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
   const [contact, setContact] = useState<ContactDetails | null>(null);
+  const [nowData, setNowData] = useState<NowData | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [postsRes, projectsRes, contactRes] = await Promise.all([
+        const [postsRes, projectsRes, contactRes, nowRes] = await Promise.all([
           fetch('/api/posts?admin=true'),
           fetch('/api/projects'),
           fetch('/api/contact'),
+          fetch('/api/now'),
         ]);
 
         if (postsRes.status === 401) {
@@ -31,6 +49,7 @@ export default function AdminDashboardPage() {
         if (postsRes.ok) setPosts(await postsRes.json());
         if (projectsRes.ok) setProjects(await projectsRes.json());
         if (contactRes.ok) setContact(await contactRes.json());
+        if (nowRes.ok) setNowData(await nowRes.json());
       } catch (err) {
         console.error('Failed to load admin data', err);
       } finally {
@@ -40,6 +59,7 @@ export default function AdminDashboardPage() {
 
     loadData();
   }, [router]);
+
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -87,31 +107,101 @@ export default function AdminDashboardPage() {
         </div>
         <button
           onClick={handleLogout}
-          className="flex items-center gap-1.5 px-3 py-1 rounded border border-terminal-red/30 bg-terminal-red/10 text-terminal-red hover:bg-terminal-red/20 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-terminal-red/30 bg-terminal-red/10 text-terminal-red hover:bg-terminal-red/20 transition-all font-bold"
         >
           <LogOut className="w-3.5 h-3.5" />
           <span>Exit Session</span>
         </button>
       </div>
 
-      {/* Contact & Identity Endpoints Card */}
-      <div className="p-4 rounded-xl border border-terminal-green/30 bg-black/60 font-mono text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-terminal-green font-bold">
-            <Mail className="w-4 h-4" />
-            <span>Public Contact Endpoints</span>
+      {/* Telemetry & Identity Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* /now Telemetry Status Card */}
+        <div className="p-4 rounded-xl border border-terminal-green/30 bg-black/60 font-mono text-xs flex flex-col justify-between gap-3">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-terminal-green font-bold">
+                <Activity className="w-4 h-4" />
+                <span>/NOW STATUS TELEMETRY</span>
+              </div>
+              <span className="px-1.5 py-0.5 rounded text-[10px] bg-terminal-green/10 text-terminal-green border border-terminal-green/30">
+                {nowData?.items?.length ?? 0} ACTIVE
+              </span>
+            </div>
+
+            <p className="text-terminal-muted line-clamp-2">
+              {nowData?.settings?.currentFocus || 'Manage ongoing projects, books, subjects, and internships.'}
+            </p>
+
+            {nowData?.items && nowData.items.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-1 text-[10px] text-terminal-muted">
+                <span className="flex items-center gap-1 text-terminal-green">
+                  <Zap className="w-3 h-3" />
+                  {nowData.items.filter((i) => i.category === 'working_on').length} Working
+                </span>
+                <span className="flex items-center gap-1 text-purple-400">
+                  <BookOpen className="w-3 h-3" />
+                  {nowData.items.filter((i) => i.category === 'reading').length} Reading
+                </span>
+                <span className="flex items-center gap-1 text-cyan-400">
+                  <GraduationCap className="w-3 h-3" />
+                  {nowData.items.filter((i) => i.category === 'subject').length} Subjects
+                </span>
+                <span className="flex items-center gap-1 text-terminal-amber">
+                  <Briefcase className="w-3 h-3" />
+                  {nowData.items.filter((i) => i.category === 'internship').length} Internships
+                </span>
+              </div>
+            )}
           </div>
-          <div className="text-terminal-muted text-[11px]">
-            Official: <span className="text-terminal-text">{contact?.officialEmail || 'anuragsoni5473@gmail.com'}</span> | VIT: <span className="text-cyan-400">{contact?.vitEmail || 'anurag.soni2025@vitstudent.ac.in'}</span>
+
+          <div className="pt-2 border-t border-terminal-green/10 flex items-center justify-between">
+            <span className="text-[10px] text-terminal-muted">
+              Synced: {nowData?.settings?.lastUpdated ? new Date(nowData.settings.lastUpdated).toLocaleDateString() : 'N/A'}
+            </span>
+            <Link
+              href="/admin/now"
+              className="inline-flex items-center gap-1 text-terminal-green hover:underline font-bold"
+            >
+              <span>Manage /now Log</span>
+              <ArrowRight className="w-3 h-3" />
+            </Link>
           </div>
         </div>
-        <Link
-          href="/admin/contact"
-          className="px-3 py-1.5 rounded bg-terminal-green/10 border border-terminal-green/30 text-terminal-green hover:bg-terminal-green/20 transition flex items-center gap-1.5 text-[11px]"
-        >
-          <Edit className="w-3.5 h-3.5" />
-          <span>Edit Contact Details</span>
-        </Link>
+
+        {/* Contact & Identity Endpoints Card */}
+        <div className="p-4 rounded-xl border border-terminal-green/30 bg-black/60 font-mono text-xs flex flex-col justify-between gap-3">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-terminal-green font-bold">
+                <Mail className="w-4 h-4" />
+                <span>IDENTITY &amp; CONTACT MATRIX</span>
+              </div>
+              <span className="px-1.5 py-0.5 rounded text-[10px] bg-terminal-green/10 text-terminal-green border border-terminal-green/30">
+                {contact?.channels?.filter((c) => c.visible !== false).length ?? 0} ACTIVE
+              </span>
+            </div>
+            <p className="text-terminal-muted line-clamp-2">
+              {contact?.bio || 'Manage contact endpoints, social links, and security keys.'}
+            </p>
+            <div className="text-[10px] text-terminal-muted truncate">
+              Inbox: {contact?.officialEmail || 'anuragsoni5473@gmail.com'}
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-terminal-green/10 flex items-center justify-between">
+            <span className="text-[10px] text-terminal-muted">
+              Location: {contact?.location || 'Vellore'}
+            </span>
+            <Link
+              href="/admin/contact"
+              className="inline-flex items-center gap-1 text-terminal-green hover:underline font-bold"
+            >
+              <span>Edit Contact Info</span>
+              <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+        </div>
       </div>
 
       <TerminalWindow pathLabel="root@cyberlog:~# dashboard">
