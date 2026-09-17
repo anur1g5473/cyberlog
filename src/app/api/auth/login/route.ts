@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 5. Zero-Trust TOTP 2FA Verification (If configured or enforced in production)
-    const totpSecret = process.env.ADMIN_TOTP_SECRET || env.ADMIN_TOTP_SECRET;
+    const totpSecret = process.env.AUTHENTICATOR || process.env.ADMIN_TOTP_SECRET || env.AUTHENTICATOR || env.ADMIN_TOTP_SECRET;
     const isTotpEnforced = Boolean(totpSecret && totpSecret.trim().length > 0);
 
     if (isTotpEnforced) {

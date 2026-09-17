@@ -73,8 +73,8 @@ TELEMETRY_SALT="custom-secret-telemetry-salt-for-ip-hashing"
 ADMIN_PASSPHRASE="your_secure_passphrase"
 # Or Bcrypt Hash: ADMIN_PASSPHRASE_HASH="\$2a\$10\$YourGeneratedBcryptHashHere..."
 
-# Optional: Google Authenticator TOTP Secret (Base32)
-# ADMIN_TOTP_SECRET="JBSWY3DPEHPK3PXP..."
+# Optional: Google Authenticator TOTP Secret (Leave empty locally, set on Vercel)
+# AUTHENTICATOR="JBSWY3DPEHPK3PXP..."
 ```
 
 ### 4. Initialize Database Pipeline

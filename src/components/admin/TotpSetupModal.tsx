@@ -77,7 +77,7 @@ export function TotpSetupModal() {
             ) : data ? (
               <div className="space-y-3 text-[11px]">
                 <p className="text-terminal-muted">
-                  Scan this QR code in Google Authenticator or copy the Base32 secret into your <code className="text-terminal-green">.env.local</code> as <code className="text-terminal-green">ADMIN_TOTP_SECRET</code>.
+                  Scan this QR code in Google Authenticator or copy the Base32 secret into your Vercel Environment Variables as <code className="text-terminal-green">AUTHENTICATOR</code>.
                 </p>
 
                 {data.qrUrl && (

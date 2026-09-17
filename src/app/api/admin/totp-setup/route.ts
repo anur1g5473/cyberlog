@@ -11,7 +11,7 @@ export async function GET() {
     return NextResponse.json({ success: false, message: 'Unauthorized root access' }, { status: 401 });
   }
 
-  const existingSecret = process.env.ADMIN_TOTP_SECRET || env.ADMIN_TOTP_SECRET || '';
+  const existingSecret = process.env.AUTHENTICATOR || process.env.ADMIN_TOTP_SECRET || env.AUTHENTICATOR || env.ADMIN_TOTP_SECRET || '';
   const isConfigured = Boolean(existingSecret && existingSecret.trim().length > 0);
 
   // If already configured, show masked secret and status
