@@ -38,7 +38,7 @@ Because a security researcher's blog should be secure by default, this platform 
 ## 🖥️ UI / UX HIGHLIGHTS (THE TERMINAL)
 
 *   **Custom Glassmorphism:** Blurred, transparent overlays mimicking modern macOS/Linux terminal environments.
-*   `<CommandPalette />`: Hit `Cmd + K` anywhere on the site for an instant, fuzzy-search navigation overlay.
+*   `<TacticalHUD />`: Hit `M` or click the compass in the navbar to open live Zero-PII telemetry and quick access navigation.
 *   `<DotTrailProgress />`: A dynamic, glowing trajectory line that tracks reading progress down the page.
 *   **Boot Sequence:** A one-time simulated OS boot animation for new sessions.
 

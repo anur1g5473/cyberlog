@@ -3,14 +3,13 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Terminal, Shield, BookOpen, FolderGit2, User, Clock, Search, Lock, Compass, ShieldCheck } from 'lucide-react';
+import { Terminal, Shield, BookOpen, FolderGit2, User, Clock, Lock, Compass, ShieldCheck } from 'lucide-react';
 
 interface NavbarProps {
-  onOpenSearch?: () => void;
   onOpenDrawer?: () => void;
 }
 
-export function Navbar({ onOpenSearch, onOpenDrawer }: NavbarProps) {
+export function Navbar({ onOpenDrawer }: NavbarProps) {
   const pathname = usePathname();
 
   const navItems = [
@@ -64,21 +63,8 @@ export function Navbar({ onOpenSearch, onOpenDrawer }: NavbarProps) {
           })}
         </div>
         <div className="h-4 w-px bg-terminal-green/20 mx-1"></div>
-        {/* Search, HUD, Security, Admin */}
+        {/* HUD, Security, Admin */}
         <div className="flex items-center gap-1">
-          {onOpenSearch && (
-            <button
-              onClick={onOpenSearch}
-              className="flex items-center gap-1 px-2 py-1.5 rounded-full text-xs font-mono text-terminal-muted hover:text-terminal-green hover:bg-terminal-green/10 transition"
-              title="Search (Cmd+K)"
-            >
-              <Search className="w-3.5 h-3.5" />
-              <kbd className="hidden lg:inline text-[9px] px-1 py-0.5 rounded bg-terminal-green/10 border border-terminal-green/30 text-terminal-green">
-                ⌘K
-              </kbd>
-            </button>
-          )}
-
           <button
             onClick={handleOpenDrawer}
             className="flex items-center gap-1 px-2 py-1.5 rounded-full text-xs font-mono text-terminal-muted hover:text-terminal-green hover:bg-terminal-green/10 transition"

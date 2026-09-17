@@ -6,24 +6,19 @@ import { Navbar } from '@/components/ui/Navbar';
 import { Footer } from '@/components/ui/Footer';
 import { DotTrailProgress } from '@/components/ui/DotTrailProgress';
 import { BootSequence } from '@/components/ui/BootSequence';
-import { CommandPalette } from '@/components/ui/CommandPalette';
 import { CustomCursor } from '@/components/ui/CustomCursor';
 import { SlidingDrawer } from '@/components/ui/SlidingDrawer';
 
 export function ClientLayoutWrapper({ children }: { children: React.ReactNode }) {
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
-    const handleOpenSearch = () => setIsSearchOpen(true);
     const handleOpenDrawer = () => setIsDrawerOpen(true);
 
-    window.addEventListener('open-search', handleOpenSearch);
     window.addEventListener('open-hud-drawer', handleOpenDrawer);
 
     return () => {
-      window.removeEventListener('open-search', handleOpenSearch);
       window.removeEventListener('open-hud-drawer', handleOpenDrawer);
     };
   }, []);
@@ -45,16 +40,11 @@ export function ClientLayoutWrapper({ children }: { children: React.ReactNode })
       <BootSequence />
       <DotTrailProgress />
       <Navbar
-        onOpenSearch={() => setIsSearchOpen(true)}
         onOpenDrawer={() => setIsDrawerOpen(true)}
       />
       <SlidingDrawer
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
-      />
-      <CommandPalette
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
       />
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 pt-24 pb-12">
         {children}
@@ -63,6 +53,7 @@ export function ClientLayoutWrapper({ children }: { children: React.ReactNode })
     </>
   );
 }
+
 
 
 
