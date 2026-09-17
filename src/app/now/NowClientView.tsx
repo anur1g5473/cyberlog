@@ -148,6 +148,14 @@ export function NowClientView({ settings, items }: NowClientViewProps) {
               }`}
             >
               {cat.icon}
+              <span>{cat.label}</span>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${isSelected ? 'bg-terminal-green text-black font-bold' : 'bg-terminal-green/10 text-terminal-green'}`}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
       {/* Items Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -263,18 +271,6 @@ export function NowClientView({ settings, items }: NowClientViewProps) {
           })
         )}
       </div>
-
-              <span>{cat.label}</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${isSelected ? 'bg-terminal-green text-black font-bold' : 'bg-terminal-green/10 text-terminal-green'}`}>
-                {count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-        ;
-      default:
 
       {/* Sivers /now page philosophy footer banner */}
       <div className="mt-12 p-4 rounded-xl border border-terminal-green/20 bg-black/40 text-[11px] text-terminal-muted flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">

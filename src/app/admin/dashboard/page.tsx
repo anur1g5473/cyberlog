@@ -122,7 +122,6 @@ export default function AdminDashboardPage() {
             </button>
           </div>
         </div>
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-terminal-red/30 bg-terminal-red/10 text-terminal-red hover:bg-terminal-red/20 transition-all font-bold"
 
 
       {/* Telemetry & Identity Cards Grid */}
