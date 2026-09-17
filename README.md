@@ -63,11 +63,18 @@ npm install
 Create a `.env` file in the root directory and populate it with your Supabase credentials and cryptographic keys:
 ```env
 NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
 SUPABASE_SERVICE_ROLE_KEY="your-supabase-service-role-key"
 
-JWT_SECRET="generate-a-long-random-string-here"
-# Pre-hash your password using bcrypt (Cost: 10) and paste it below
-ADMIN_PASSPHRASE_HASH="$2a$10$YourGeneratedBcryptHashHere..."
+JWT_SECRET="generate-a-long-random-string-at-least-32-chars"
+TELEMETRY_SALT="custom-secret-telemetry-salt-for-ip-hashing"
+
+# Admin Authentication (Choose either plaintext or pre-hashed)
+ADMIN_PASSPHRASE="your_secure_passphrase"
+# Or Bcrypt Hash: ADMIN_PASSPHRASE_HASH="\$2a\$10\$YourGeneratedBcryptHashHere..."
+
+# Optional: Google Authenticator TOTP Secret (Base32)
+# ADMIN_TOTP_SECRET="JBSWY3DPEHPK3PXP..."
 ```
 
 ### 4. Initialize Database Pipeline
