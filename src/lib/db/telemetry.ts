@@ -13,26 +13,54 @@ export interface VisitorLog {
   visitorHash: string;
   realIp: string;
   path: string;
-  viewedAt: string;
+  hourBucket: string;
+  firstVisit: string;
+  lastVisit: string;
+  hitCount: number;
 }
 
 /**
- * Records an origin-hashed page view (visitor hash + target path).
+ * Records or updates a page view, grouped by (visitorHash, hourBucket).
+ * On the first hit that hour: inserts with firstVisit = lastVisit = now(), hitCount = 1.
+ * On subsequent hits: updates lastVisit = now(), hitCount += 1.
  */
 export async function recordPageView(visitorHash: string, path: string = '/'): Promise<boolean> {
   try {
-    const { error } = await supabase.from('telemetry_views').insert([
+    const now = new Date();
+    const hourBucket = new Date(now);
+    hourBucket.setMinutes(0, 0, 0);
+    const hourBucketIso = hourBucket.toISOString();
+    const nowIso = now.toISOString();
+
+    // Try to insert first (first visit this hour)
+    const { error: insertErr } = await supabase.from('telemetry_views').insert([
       {
         visitorHash,
         path: path.slice(0, 100),
+        hourBucket: hourBucketIso,
+        firstVisit: nowIso,
+        lastVisit: nowIso,
+        hitCount: 1,
       },
     ]);
 
-    if (error) {
-      console.error('[TELEMETRY] Insert error:', error.message);
-      return false;
+    if (!insertErr) return true;
+
+    // Unique conflict (23505) = already visited this hour, increment via RPC
+    if (insertErr.code === '23505') {
+      const { error: rpcErr } = await supabase.rpc('increment_telemetry_hit', {
+        p_visitor_hash: visitorHash,
+        p_hour_bucket: hourBucketIso,
+        p_last_visit: nowIso,
+      });
+      if (rpcErr) {
+        console.error('[TELEMETRY] RPC increment error:', rpcErr.message);
+      }
+      return true;
     }
-    return true;
+
+    console.error('[TELEMETRY] Insert error:', insertErr.message);
+    return false;
   } catch (err) {
     console.error('[TELEMETRY] Unexpected error recording view:', err);
     return false;
@@ -51,41 +79,26 @@ export async function getTelemetryStats(): Promise<TelemetryStats> {
   };
 
   try {
-    // 1. Fetch total count
-    const { count: totalCount, error: countErr } = await supabase
+    const { data: views, error } = await supabase
       .from('telemetry_views')
-      .select('*', { count: 'exact', head: true });
-
-    if (countErr) {
-      return defaultStats;
-    }
-
-    // 2. Fetch distinct records for unique nodes calculation (sample recent 2000)
-    const { data: views, error: dataErr } = await supabase
-      .from('telemetry_views')
-      .select('visitorHash, path, viewedAt')
-      .order('viewedAt', { ascending: false })
+      .select('visitorHash, path, hitCount, lastVisit')
+      .order('lastVisit', { ascending: false })
       .limit(2000);
 
-    if (dataErr || !views) {
-      return {
-        ...defaultStats,
-        totalHits: totalCount || 1,
-      };
-    }
+    if (error || !views) return defaultStats;
 
     const uniqueSet = new Set<string>();
     const pathCounts: Record<string, number> = {};
     const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    let totalHits = 0;
     let recent24h = 0;
 
     for (const item of views) {
       uniqueSet.add(item.visitorHash);
-      pathCounts[item.path] = (pathCounts[item.path] || 0) + 1;
-
-      const viewTime = new Date(item.viewedAt).getTime();
-      if (viewTime >= oneDayAgo) {
-        recent24h++;
+      totalHits += item.hitCount || 1;
+      pathCounts[item.path] = (pathCounts[item.path] || 0) + (item.hitCount || 1);
+      if (new Date(item.lastVisit).getTime() >= oneDayAgo) {
+        recent24h += item.hitCount || 1;
       }
     }
 
@@ -96,7 +109,7 @@ export async function getTelemetryStats(): Promise<TelemetryStats> {
 
     return {
       uniqueNodes: Math.max(uniqueSet.size, 1),
-      totalHits: Math.max(totalCount || views.length, 1),
+      totalHits: Math.max(totalHits, 1),
       recent24h: Math.max(recent24h, 1),
       topPaths: topPaths.length > 0 ? topPaths : [{ path: '/', count: 1 }],
     };
@@ -107,30 +120,32 @@ export async function getTelemetryStats(): Promise<TelemetryStats> {
 }
 
 /**
- * Retrieves recent visitor logs with decoded Real IPs for the admin console.
+ * Retrieves recent visitor logs (grouped hourly sessions) with decoded Real IPs.
  */
-export async function getRecentVisitorLogs(limit = 30): Promise<VisitorLog[]> {
+export async function getRecentVisitorLogs(limit = 50): Promise<VisitorLog[]> {
   try {
     const { data, error } = await supabase
       .from('telemetry_views')
-      .select('id, visitorHash, path, viewedAt')
-      .order('viewedAt', { ascending: false })
+      .select('id, visitorHash, path, hourBucket, firstVisit, lastVisit, hitCount')
+      .order('lastVisit', { ascending: false })
       .limit(limit);
 
-    if (error || !data) {
-      return [];
-    }
+    if (error || !data) return [];
 
     return data.map((item) => ({
       id: item.id,
       visitorHash: item.visitorHash,
       realIp: decodeIp(item.visitorHash),
       path: item.path,
-      viewedAt: item.viewedAt,
+      hourBucket: item.hourBucket,
+      firstVisit: item.firstVisit,
+      lastVisit: item.lastVisit,
+      hitCount: item.hitCount || 1,
     }));
   } catch (err) {
     console.error('[TELEMETRY] Error fetching visitor logs:', err);
     return [];
   }
 }
+
 

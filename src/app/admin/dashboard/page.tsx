@@ -26,6 +26,7 @@ import { NowData } from '@/lib/db/now';
 import { InactivityLockout } from '@/components/admin/InactivityLockout';
 import { AuditLogViewer } from '@/components/admin/AuditLogViewer';
 import { LoginAttemptsViewer } from '@/components/admin/LoginAttemptsViewer';
+import { VisitorTelemetryViewer } from '@/components/admin/VisitorTelemetryViewer';
 import { TotpSetupModal } from '@/components/admin/TotpSetupModal';
 
 
@@ -305,6 +306,9 @@ export default function AdminDashboardPage() {
               </table>
             </div>
           </div>
+
+          {/* Visitor Origin Ledger */}
+          <VisitorTelemetryViewer />
 
           {/* Active Login Attempts & Lockout Monitor */}
           <LoginAttemptsViewer />
