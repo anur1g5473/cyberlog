@@ -25,6 +25,7 @@ import { ContactDetails } from '@/lib/db/contact';
 import { NowData } from '@/lib/db/now';
 import { InactivityLockout } from '@/components/admin/InactivityLockout';
 import { AuditLogViewer } from '@/components/admin/AuditLogViewer';
+import { LoginAttemptsViewer } from '@/components/admin/LoginAttemptsViewer';
 import { TotpSetupModal } from '@/components/admin/TotpSetupModal';
 
 
@@ -304,6 +305,9 @@ export default function AdminDashboardPage() {
               </table>
             </div>
           </div>
+
+          {/* Active Login Attempts & Lockout Monitor */}
+          <LoginAttemptsViewer />
 
           {/* Immutable Security Audit Trail */}
           <AuditLogViewer />

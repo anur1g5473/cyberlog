@@ -1,20 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
-import { env } from '@/lib/config/env';
 import { recordPageView, getTelemetryStats } from '@/lib/db/telemetry';
+import { encodeIp } from '@/lib/security/ipCodec';
 
 export const dynamic = 'force-dynamic';
 
 function generateVisitorHash(req: NextRequest): string {
   const forwarded = req.headers.get('x-forwarded-for');
-  const ip = forwarded ? forwarded.split(',')[0].trim() : req.ip || '127.0.0.1';
-  const ua = req.headers.get('user-agent') || '';
-  const salt = env.TELEMETRY_SALT || 'cyberlog_telemetry_salt_secret';
-
-  return crypto
-    .createHash('sha256')
-    .update(`${ip}:${salt}:${ua.slice(0, 100)}`)
-    .digest('hex');
+  const rawIp = forwarded ? forwarded.split(',')[0].trim() : req.ip || '127.0.0.1';
+  const ip = rawIp === '::1' ? '127.0.0.1' : rawIp;
+  return encodeIp(ip);
 }
 
 export async function GET() {
@@ -23,7 +17,7 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       data: stats,
-      privacy: 'Zero-PII SHA-256 Salted Cryptographic Telemetry (GDPR Compliant)',
+      privacy: 'Origin-Hashed Real-Time Telemetry & Session Monitoring',
     });
   } catch (error) {
     console.error('Telemetry GET Error:', error);
@@ -46,7 +40,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      visitorNode: visitorHash.slice(0, 8),
+      visitorNode: visitorHash.slice(0, 16),
       stats,
     });
   } catch (error) {
@@ -57,3 +51,4 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+

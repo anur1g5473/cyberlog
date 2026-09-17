@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
 import { verifyAdminPassphrase } from '@/lib/auth/passphrase';
 import { getLockoutStatus, recordFailedAttempt, resetLockout } from '@/lib/auth/lockout';
 import { verifyMathChallenge } from '@/lib/auth/challenge';
@@ -7,22 +6,19 @@ import { createAdminSession } from '@/lib/auth/session';
 import { verifyTotpCode } from '@/lib/auth/totp';
 import { env } from '@/lib/config/env';
 import { logSecurityEvent } from '@/lib/db/audit';
+import { encodeIp } from '@/lib/security/ipCodec';
 
-function getActorHash(ip: string, userAgent = ''): string {
-  return crypto
-    .createHash('sha256')
-    .update(`${ip}:${env.TELEMETRY_SALT}:${userAgent.slice(0, 50)}`)
-    .digest('hex')
-    .slice(0, 16);
+function getActorHash(ip: string): string {
+  return encodeIp(ip);
 }
 
 export async function POST(req: NextRequest) {
   try {
     // 1. Identify origin (IP address)
     const forwarded = req.headers.get('x-forwarded-for');
-    const ip = forwarded ? forwarded.split(',')[0].trim() : req.ip || '127.0.0.1';
-    const userAgent = req.headers.get('user-agent') || '';
-    const actorHash = getActorHash(ip, userAgent);
+    const rawIp = forwarded ? forwarded.split(',')[0].trim() : req.ip || '127.0.0.1';
+    const ip = rawIp === '::1' ? '127.0.0.1' : rawIp;
+    const actorHash = getActorHash(ip);
 
     // 2. Check active lockout status before doing heavy cryptographic work
     const lockout = await getLockoutStatus(ip);
@@ -31,7 +27,7 @@ export async function POST(req: NextRequest) {
         eventType: 'AUTH_LOCKOUT',
         action: 'Blocked login attempt on locked origin',
         status: 'DENIED',
-        details: { ip: ip.slice(0, 7) + '.***', remainingSeconds: lockout.remainingSeconds },
+        details: { ip: actorHash, realIp: ip, remainingSeconds: lockout.remainingSeconds },
         actorHash,
       });
 
@@ -58,7 +54,7 @@ export async function POST(req: NextRequest) {
         eventType: 'AUTH_FAILURE',
         action: 'Failed Math Challenge / Bot Defense',
         status: 'WARNING',
-        details: { message: captchaCheck.message },
+        details: { message: captchaCheck.message, origin: actorHash, realIp: ip },
         actorHash,
       });
 
@@ -83,7 +79,7 @@ export async function POST(req: NextRequest) {
         eventType: 'AUTH_FAILURE',
         action: 'Invalid Master Passphrase',
         status: 'DENIED',
-        details: { failedCount: lockoutUpdate.failedCount },
+        details: { failedCount: lockoutUpdate.failedCount, origin: actorHash, realIp: ip },
         actorHash,
       });
 
@@ -110,7 +106,7 @@ export async function POST(req: NextRequest) {
           eventType: 'AUTH_FAILURE',
           action: 'Invalid or missing Google Authenticator TOTP code',
           status: 'DENIED',
-          details: { totpProvided: Boolean(totpCode) },
+          details: { totpProvided: Boolean(totpCode), origin: actorHash, realIp: ip },
           actorHash,
         });
 
@@ -135,7 +131,7 @@ export async function POST(req: NextRequest) {
       eventType: 'AUTH_SUCCESS',
       action: 'Root Admin Authenticated (Zero-Trust Session Issued)',
       status: 'SUCCESS',
-      details: { totpVerified: isTotpEnforced },
+      details: { totpVerified: isTotpEnforced, origin: actorHash, realIp: ip },
       actorHash,
     });
 
@@ -151,4 +147,5 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
 

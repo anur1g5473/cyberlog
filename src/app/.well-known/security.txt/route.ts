@@ -13,7 +13,7 @@ Acknowledgments: https://cyberlog.tech/about
 Encryption: https://cyberlog.tech/about#pgp-key
 
 # Defensive Principles
-# - Zero-PII Telemetry: One-way SHA-256 salted non-invertible viewer hashing
+# - Origin Telemetry: Obfuscated cryptographic origin encoding with root admin audit ledger
 # - Zero-Trust Admin: Dual-layer 5-minute inactivity termination + Argon2 / Timing-safe HMAC
 # - Micro-Segmentation: 100% Supabase PostgreSQL Row-Level Security
 `;

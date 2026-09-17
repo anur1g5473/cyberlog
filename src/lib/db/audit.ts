@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { decodeIp } from '@/lib/security/ipCodec';
 
 export type AuditEventType =
   | 'AUTH_SUCCESS'
@@ -16,6 +17,7 @@ export interface AuditLogEntry {
   status: 'SUCCESS' | 'WARNING' | 'DENIED';
   details?: Record<string, any>;
   actorHash: string;
+  realIp?: string;
   createdAt?: string;
 }
 
@@ -30,7 +32,7 @@ export async function logSecurityEvent(entry: Omit<AuditLogEntry, 'id' | 'create
         action: entry.action,
         status: entry.status || 'SUCCESS',
         details: entry.details || {},
-        actorHash: entry.actorHash ? entry.actorHash.slice(0, 32) : 'ANONYMOUS',
+        actorHash: entry.actorHash ? entry.actorHash.slice(0, 128) : 'ANONYMOUS',
       },
     ]);
 
@@ -46,9 +48,9 @@ export async function logSecurityEvent(entry: Omit<AuditLogEntry, 'id' | 'create
 }
 
 /**
- * Retrieves the most recent immutable audit logs for the admin security console.
+ * Retrieves the most recent immutable audit logs for the admin security console with decoded Real IPs.
  */
-export async function getRecentAuditLogs(limit = 25): Promise<AuditLogEntry[]> {
+export async function getRecentAuditLogs(limit = 35): Promise<AuditLogEntry[]> {
   try {
     const { data, error } = await supabase
       .from('security_audit_logs')
@@ -61,9 +63,13 @@ export async function getRecentAuditLogs(limit = 25): Promise<AuditLogEntry[]> {
       return [];
     }
 
-    return data as AuditLogEntry[];
+    return (data as AuditLogEntry[]).map((log) => ({
+      ...log,
+      realIp: decodeIp(log.actorHash),
+    }));
   } catch (err) {
     console.error('[AUDIT] Error fetching audit logs:', err);
     return [];
   }
 }
+

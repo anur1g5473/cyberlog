@@ -13,11 +13,11 @@ export default function SecurityPosturePage() {
   const defenseLayers = [
     {
       id: '01',
-      title: 'Zero-PII Salted Telemetry',
+      title: 'Origin-Hashed Telemetry & Ledger',
       icon: EyeOff,
-      badge: 'GDPR COMPLIANT',
-      description: 'Zero tracking cookies. Visits generate an irreversible SHA-256 hash using a secret server salt.',
-      tech: 'SHA-256(IP + TELEMETRY_SALT + UA). Raw IP addresses are immediately discarded from memory.',
+      badge: 'CRYPTOGRAPHIC LEDGER',
+      description: 'Zero tracking cookies. Origin visits and login attempts are encoded into obfuscated hash tokens for public telemetry, verifiable in the admin security console.',
+      tech: 'Reversible 1-to-1 alphabet substitution cipher codec (IPv4/IPv6). Lossless decryption for root admin origin inspection.',
     },
     {
       id: '02',

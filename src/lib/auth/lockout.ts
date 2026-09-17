@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/db/supabase';
+import { encodeIp, decodeIp } from '@/lib/security/ipCodec';
 
 export interface LockoutStatus {
   isLocked: boolean;
@@ -7,11 +8,21 @@ export interface LockoutStatus {
   message?: string;
 }
 
+export interface LoginAttemptRecord {
+  id?: string;
+  identifier: string;
+  decodedIp: string;
+  failedCount: number;
+  lockedUntil: string | null;
+  updatedAt?: string;
+  isLocked: boolean;
+  remainingSeconds: number;
+}
+
 // In-memory fallback map in case Supabase connection is down or table isn't migrated yet
 const memoryLockoutStore = new Map<string, { failedCount: number; lockedUntil: number | null }>();
 
 export function calculateLockoutDuration(failedCount: number): number {
-  // Only trigger lockout on exact multiples of 3 attempts (3, 6, 9, 12...)
   if (failedCount <= 0 || failedCount % 3 !== 0) return 0;
   
   const lockIndex = Math.floor(failedCount / 3);
@@ -24,12 +35,21 @@ export function calculateLockoutDuration(failedCount: number): number {
   return Math.min(duration, 600); // Max 10 minutes (600s)
 }
 
-export async function getLockoutStatus(identifier: string): Promise<LockoutStatus> {
+function normalizeIdentifier(identifier: string): string {
+  if (!identifier) return 'ANONYMOUS';
+  return identifier.startsWith('HASH_') ? identifier : encodeIp(identifier);
+}
+
+export async function getLockoutStatus(rawIdentifier: string): Promise<LockoutStatus> {
+  const identifier = normalizeIdentifier(rawIdentifier);
+
   try {
     const { data: attempt, error } = await supabase
       .from('login_attempts')
       .select('*')
-      .eq('identifier', identifier)
+      .or(`identifier.eq.${identifier},identifier.eq.${rawIdentifier}`)
+      .order('updatedAt', { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     if (!error && attempt) {
@@ -53,8 +73,7 @@ export async function getLockoutStatus(identifier: string): Promise<LockoutStatu
     console.error('[LOCKOUT DB GET ERROR]:', err);
   }
 
-  // Fallback to memory store if DB check returns no row or fails
-  const mem = memoryLockoutStore.get(identifier);
+  const mem = memoryLockoutStore.get(identifier) || memoryLockoutStore.get(rawIdentifier);
   if (mem && mem.lockedUntil && mem.lockedUntil > Date.now()) {
     const remainingSeconds = Math.ceil((mem.lockedUntil - Date.now()) / 1000);
     return {
@@ -72,24 +91,27 @@ export async function getLockoutStatus(identifier: string): Promise<LockoutStatu
   };
 }
 
-export async function recordFailedAttempt(identifier: string): Promise<LockoutStatus> {
+export async function recordFailedAttempt(rawIdentifier: string): Promise<LockoutStatus> {
+  const identifier = normalizeIdentifier(rawIdentifier);
   let currentFailedCount = 0;
 
   try {
     const { data: existing } = await supabase
       .from('login_attempts')
       .select('*')
-      .eq('identifier', identifier)
+      .or(`identifier.eq.${identifier},identifier.eq.${rawIdentifier}`)
+      .order('updatedAt', { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     if (existing) {
       currentFailedCount = existing.failedCount || 0;
     } else {
-      const mem = memoryLockoutStore.get(identifier);
+      const mem = memoryLockoutStore.get(identifier) || memoryLockoutStore.get(rawIdentifier);
       if (mem) currentFailedCount = mem.failedCount;
     }
   } catch (err) {
-    const mem = memoryLockoutStore.get(identifier);
+    const mem = memoryLockoutStore.get(identifier) || memoryLockoutStore.get(rawIdentifier);
     if (mem) currentFailedCount = mem.failedCount;
   }
 
@@ -104,8 +126,14 @@ export async function recordFailedAttempt(identifier: string): Promise<LockoutSt
     failedCount: newFailedCount,
     lockedUntil: lockedUntilMs,
   });
+  if (rawIdentifier !== identifier) {
+    memoryLockoutStore.set(rawIdentifier, {
+      failedCount: newFailedCount,
+      lockedUntil: lockedUntilMs,
+    });
+  }
 
-  // Try updating Supabase database
+  // Try updating Supabase database with the decryptable hash representation
   try {
     await supabase.from('login_attempts').upsert(
       {
@@ -134,14 +162,80 @@ export async function recordFailedAttempt(identifier: string): Promise<LockoutSt
   };
 }
 
-export async function resetLockout(identifier: string): Promise<void> {
+export async function resetLockout(rawIdentifier: string): Promise<void> {
+  const identifier = normalizeIdentifier(rawIdentifier);
   memoryLockoutStore.delete(identifier);
+  memoryLockoutStore.delete(rawIdentifier);
+
   try {
-    await supabase.from('login_attempts').delete().eq('identifier', identifier);
+    await supabase
+      .from('login_attempts')
+      .delete()
+      .or(`identifier.eq.${identifier},identifier.eq.${rawIdentifier}`);
   } catch (err) {
     console.error('[LOCKOUT RESET ERROR]:', err);
   }
 }
+
+/**
+ * Retrieves all login attempt records enriched with decoded Real IPs.
+ */
+export async function getAllLoginAttempts(): Promise<LoginAttemptRecord[]> {
+  try {
+    const { data, error } = await supabase
+      .from('login_attempts')
+      .select('*')
+      .order('updatedAt', { ascending: false })
+      .limit(50);
+
+    if (!error && data && data.length > 0) {
+      return data.map((item) => {
+        const isLocked = Boolean(item.lockedUntil && new Date(item.lockedUntil) > new Date());
+        const remainingSeconds = isLocked
+          ? Math.max(0, Math.ceil((new Date(item.lockedUntil).getTime() - Date.now()) / 1000))
+          : 0;
+
+        return {
+          id: item.id,
+          identifier: item.identifier,
+          decodedIp: decodeIp(item.identifier),
+          failedCount: item.failedCount || 0,
+          lockedUntil: item.lockedUntil || null,
+          updatedAt: item.updatedAt || item.created_at,
+          isLocked,
+          remainingSeconds,
+        };
+      });
+    }
+  } catch (err) {
+    console.error('[LOCKOUT GET ALL ERROR]:', err);
+  }
+
+  // Fallback to memory store
+  const results: LoginAttemptRecord[] = [];
+  const seen = new Set<string>();
+
+  memoryLockoutStore.forEach((val, key) => {
+    const decoded = decodeIp(key);
+    if (seen.has(decoded)) return;
+    seen.add(decoded);
+
+    const isLocked = Boolean(val.lockedUntil && val.lockedUntil > Date.now());
+    const remainingSeconds = isLocked ? Math.max(0, Math.ceil((val.lockedUntil! - Date.now()) / 1000)) : 0;
+
+    results.push({
+      identifier: key,
+      decodedIp: decoded,
+      failedCount: val.failedCount,
+      lockedUntil: val.lockedUntil ? new Date(val.lockedUntil).toISOString() : null,
+      isLocked,
+      remainingSeconds,
+    });
+  });
+
+  return results;
+}
+
 
 
 

@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { decodeIp } from '@/lib/security/ipCodec';
 
 export interface TelemetryStats {
   uniqueNodes: number;
@@ -7,8 +8,16 @@ export interface TelemetryStats {
   topPaths: { path: string; count: number }[];
 }
 
+export interface VisitorLog {
+  id?: string;
+  visitorHash: string;
+  realIp: string;
+  path: string;
+  viewedAt: string;
+}
+
 /**
- * Records an anonymized page view (visitor hash + target path).
+ * Records an origin-hashed page view (visitor hash + target path).
  */
 export async function recordPageView(visitorHash: string, path: string = '/'): Promise<boolean> {
   try {
@@ -96,3 +105,32 @@ export async function getTelemetryStats(): Promise<TelemetryStats> {
     return defaultStats;
   }
 }
+
+/**
+ * Retrieves recent visitor logs with decoded Real IPs for the admin console.
+ */
+export async function getRecentVisitorLogs(limit = 30): Promise<VisitorLog[]> {
+  try {
+    const { data, error } = await supabase
+      .from('telemetry_views')
+      .select('id, visitorHash, path, viewedAt')
+      .order('viewedAt', { ascending: false })
+      .limit(limit);
+
+    if (error || !data) {
+      return [];
+    }
+
+    return data.map((item) => ({
+      id: item.id,
+      visitorHash: item.visitorHash,
+      realIp: decodeIp(item.visitorHash),
+      path: item.path,
+      viewedAt: item.viewedAt,
+    }));
+  } catch (err) {
+    console.error('[TELEMETRY] Error fetching visitor logs:', err);
+    return [];
+  }
+}
+
