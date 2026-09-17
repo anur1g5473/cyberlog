@@ -3,6 +3,7 @@ import { cookies, headers } from 'next/headers';
 import { env } from '../config/env';
 
 const COOKIE_NAME = 'admin_session';
+const DEFAULT_MAX_IDLE_SECONDS = 300; // 5 minutes Zero-Trust Inactivity Threshold
 
 function getJwtSecretKey(): Uint8Array {
   const secret = process.env.JWT_SECRET || env.JWT_SECRET;
@@ -14,6 +15,7 @@ function getJwtSecretKey(): Uint8Array {
 
 export interface AdminSessionPayload {
   role: 'admin';
+  lastActive: number;
   iat: number;
   exp: number;
 }
@@ -32,14 +34,19 @@ async function isSecureHttps(): Promise<boolean> {
 }
 
 /**
- * Creates an encrypted JWT session cookie for authenticated admin.
+ * Creates an encrypted JWT session cookie for authenticated admin with initial activity timestamp.
  */
 export async function createAdminSession(): Promise<string> {
   const secretKey = getJwtSecretKey();
-  const token = await new SignJWT({ role: 'admin' })
+  const now = Math.floor(Date.now() / 1000);
+
+  const token = await new SignJWT({
+    role: 'admin',
+    lastActive: now,
+  })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('24h')
+    .setExpirationTime('12h')
     .sign(secretKey);
 
   const secure = await isSecureHttps();
@@ -49,7 +56,7 @@ export async function createAdminSession(): Promise<string> {
     secure,
     sameSite: 'lax',
     path: '/',
-    maxAge: 24 * 60 * 60, // 24 hours
+    maxAge: 12 * 60 * 60,
   });
 
   return token;
@@ -57,8 +64,9 @@ export async function createAdminSession(): Promise<string> {
 
 /**
  * Verifies if current request has a valid active admin session cookie.
+ * Validates role and checks against server-side inactivity threshold.
  */
-export async function verifyAdminSession(): Promise<boolean> {
+export async function verifyAdminSession(checkIdle = false, maxIdleSeconds = DEFAULT_MAX_IDLE_SECONDS): Promise<boolean> {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get(COOKIE_NAME)?.value;
@@ -67,14 +75,25 @@ export async function verifyAdminSession(): Promise<boolean> {
 
     const secretKey = getJwtSecretKey();
     const { payload } = await jwtVerify(token, secretKey);
-    return payload.role === 'admin';
-  } catch (err) {
+
+    if (payload.role !== 'admin') return false;
+
+    if (checkIdle && typeof payload.lastActive === 'number') {
+      const currentEpoch = Math.floor(Date.now() / 1000);
+      if (currentEpoch - payload.lastActive > maxIdleSeconds) {
+        // Idle timeout exceeded
+        return false;
+      }
+    }
+
+    return true;
+  } catch {
     return false;
   }
 }
 
 /**
- * Destroys the admin session cookie on logout.
+ * Destroys the admin session cookie on logout or inactivity expiry.
  */
 export async function clearAdminSession(): Promise<void> {
   const secure = await isSecureHttps();
@@ -87,4 +106,5 @@ export async function clearAdminSession(): Promise<void> {
     maxAge: 0,
   });
 }
+
 

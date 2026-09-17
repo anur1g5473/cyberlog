@@ -8,6 +8,8 @@ export const env = {
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
   ADMIN_PASSPHRASE_HASH: process.env.ADMIN_PASSPHRASE_HASH || '',
   ADMIN_PASSPHRASE: process.env.ADMIN_PASSPHRASE || '',
+  ADMIN_TOTP_SECRET: process.env.ADMIN_TOTP_SECRET || '',
+  TELEMETRY_SALT: process.env.TELEMETRY_SALT || 'cyberlog_telemetry_salt_secret',
   JWT_SECRET: process.env.JWT_SECRET || '',
   NODE_ENV: process.env.NODE_ENV || 'development',
   IS_DEV: process.env.NODE_ENV !== 'production',
@@ -21,5 +23,6 @@ export function validateEnv() {
     console.warn('[SECURITY WARNING] JWT_SECRET is missing or insecurely short.');
   }
 }
+
 
 

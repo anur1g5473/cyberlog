@@ -3,13 +3,14 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Terminal, Shield, BookOpen, FolderGit2, User, Clock, Search, Lock } from 'lucide-react';
+import { Terminal, Shield, BookOpen, FolderGit2, User, Clock, Search, Lock, Compass, ShieldCheck } from 'lucide-react';
 
 interface NavbarProps {
   onOpenSearch?: () => void;
+  onOpenDrawer?: () => void;
 }
 
-export function Navbar({ onOpenSearch }: NavbarProps) {
+export function Navbar({ onOpenSearch, onOpenDrawer }: NavbarProps) {
   const pathname = usePathname();
 
   const navItems = [
@@ -20,6 +21,14 @@ export function Navbar({ onOpenSearch }: NavbarProps) {
     { label: 'Now', path: '/now', icon: Clock },
     { label: 'Contact', path: '/contact', icon: Shield },
   ];
+
+  const handleOpenDrawer = () => {
+    if (onOpenDrawer) {
+      onOpenDrawer();
+    } else {
+      window.dispatchEvent(new CustomEvent('open-hud-drawer'));
+    }
+  };
 
   return (
     <header className="fixed top-5 left-0 right-0 z-40 flex justify-center px-4 pointer-events-none">
@@ -55,20 +64,40 @@ export function Navbar({ onOpenSearch }: NavbarProps) {
           })}
         </div>
         <div className="h-4 w-px bg-terminal-green/20 mx-1"></div>
-        {/* Search & Admin Quick Jump */}
+        {/* Search, HUD, Security, Admin */}
         <div className="flex items-center gap-1">
           {onOpenSearch && (
             <button
               onClick={onOpenSearch}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-mono text-terminal-muted hover:text-terminal-green hover:bg-terminal-green/10 transition"
+              className="flex items-center gap-1 px-2 py-1.5 rounded-full text-xs font-mono text-terminal-muted hover:text-terminal-green hover:bg-terminal-green/10 transition"
               title="Search (Cmd+K)"
             >
               <Search className="w-3.5 h-3.5" />
-              <kbd className="hidden lg:inline text-[10px] px-1.5 py-0.5 rounded bg-terminal-green/10 border border-terminal-green/30 text-terminal-green">
+              <kbd className="hidden lg:inline text-[9px] px-1 py-0.5 rounded bg-terminal-green/10 border border-terminal-green/30 text-terminal-green">
                 ⌘K
               </kbd>
             </button>
           )}
+
+          <button
+            onClick={handleOpenDrawer}
+            className="flex items-center gap-1 px-2 py-1.5 rounded-full text-xs font-mono text-terminal-muted hover:text-terminal-green hover:bg-terminal-green/10 transition"
+            title="Tactical HUD (M)"
+          >
+            <Compass className="w-3.5 h-3.5 text-terminal-green animate-spin" style={{ animationDuration: '20s' }} />
+            <kbd className="hidden lg:inline text-[9px] px-1 py-0.5 rounded bg-terminal-green/10 border border-terminal-green/30 text-terminal-green">
+              M
+            </kbd>
+          </button>
+
+          <Link
+            href="/security"
+            className="p-1.5 rounded-full text-terminal-muted hover:text-terminal-green hover:bg-terminal-green/10 transition"
+            title="Security Posture Dossier"
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+          </Link>
+
           <Link
             href="/admin/login"
             className="p-1.5 rounded-full text-terminal-muted hover:text-terminal-red hover:bg-terminal-red/10 transition"
@@ -81,3 +110,4 @@ export function Navbar({ onOpenSearch }: NavbarProps) {
     </header>
   );
 }
+

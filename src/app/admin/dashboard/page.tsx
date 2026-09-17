@@ -19,9 +19,14 @@ import {
   BookOpen,
   GraduationCap,
   Briefcase,
+  Radio,
 } from 'lucide-react';
 import { ContactDetails } from '@/lib/db/contact';
 import { NowData } from '@/lib/db/now';
+import { InactivityLockout } from '@/components/admin/InactivityLockout';
+import { AuditLogViewer } from '@/components/admin/AuditLogViewer';
+import { TotpSetupModal } from '@/components/admin/TotpSetupModal';
+
 
 export default function AdminDashboardPage() {
   const [posts, setPosts] = useState<any[]>([]);
@@ -99,20 +104,26 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between font-mono text-xs">
-        <div className="flex items-center gap-2 text-terminal-green">
-          <ShieldAlert className="w-4 h-4" />
-          <span className="font-bold">ROOT SECURITY PORTAL</span>
+    <InactivityLockout>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between font-mono text-xs">
+          <div className="flex items-center gap-2 text-terminal-green">
+            <ShieldAlert className="w-4 h-4" />
+            <span className="font-bold">ROOT SECURITY PORTAL</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <TotpSetupModal />
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-terminal-red/30 bg-terminal-red/10 text-terminal-red hover:bg-terminal-red/20 transition font-bold"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Logout</span>
+            </button>
+          </div>
         </div>
-        <button
-          onClick={handleLogout}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-terminal-red/30 bg-terminal-red/10 text-terminal-red hover:bg-terminal-red/20 transition-all font-bold"
-        >
-          <LogOut className="w-3.5 h-3.5" />
-          <span>Exit Session</span>
-        </button>
-      </div>
+
 
       {/* Telemetry & Identity Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -294,8 +305,12 @@ export default function AdminDashboardPage() {
               </table>
             </div>
           </div>
+
+          {/* Immutable Security Audit Trail */}
+          <AuditLogViewer />
         </div>
       </TerminalWindow>
     </div>
+  </InactivityLockout>
   );
 }

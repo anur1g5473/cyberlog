@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getPublishedPosts, getAllPostsForAdmin, createPost } from '@/lib/db/posts';
 import { verifyAdminSession } from '@/lib/auth/session';
 import { revalidatePath } from 'next/cache';
+import { logSecurityEvent } from '@/lib/db/audit';
 
 export async function GET(req: NextRequest) {
   try {
@@ -36,7 +37,13 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const newPost = await createPost(body);
 
-    // Purge Next.js cache so the new post immediately appears on blog & home page
+    await logSecurityEvent({
+      eventType: 'MUTATION',
+      action: `Created Threat Writeup: ${body.title || 'Untitled'}`,
+      status: 'SUCCESS',
+      actorHash: 'ROOT_ADMIN',
+    });
+
     revalidatePath('/blog');
     revalidatePath('/');
     revalidatePath('/admin/dashboard');
@@ -47,3 +54,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to create post' }, { status: 500 });
   }
 }
+

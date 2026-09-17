@@ -4,17 +4,18 @@ import React, { useState, useEffect } from 'react';
 import { TerminalWindow } from '@/components/ui/TerminalWindow';
 import { TypedCommand } from '@/components/ui/TypedCommand';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, Lock, ShieldAlert } from 'lucide-react';
+import { AlertCircle, Lock, ShieldAlert, KeyRound } from 'lucide-react';
 import { MathChallenge } from '@/components/ui/MathChallenge';
 
 export default function AdminLoginPage() {
   const [passphrase, setPassphrase] = useState('');
+  const [totpCode, setTotpCode] = useState('');
+  const [showTotp, setShowTotp] = useState(false);
   const [challengeData, setChallengeData] = useState({ token: '', answer: '' });
   const [error, setError] = useState<string | null>(null);
   const [lockoutSeconds, setLockoutSeconds] = useState<number | null>(null);
   const router = useRouter();
 
-  // Live countdown timer for active lockout
   useEffect(() => {
     if (lockoutSeconds === null || lockoutSeconds <= 0) return;
 
@@ -35,7 +36,6 @@ export default function AdminLoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (lockoutSeconds && lockoutSeconds > 0) return;
-
     setError(null);
 
     try {
@@ -44,6 +44,7 @@ export default function AdminLoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           passphrase,
+          totpCode: totpCode.trim() || undefined,
           challengeToken: challengeData.token,
           challengeAnswer: challengeData.answer,
         }),
@@ -54,12 +55,15 @@ export default function AdminLoginPage() {
         router.push('/admin/dashboard');
         router.refresh();
       } else {
+        if (data.requiresTotp) {
+          setShowTotp(true);
+        }
         setError(data.message || 'Authentication failed.');
         if (data.isLocked && data.remainingSeconds) {
           setLockoutSeconds(data.remainingSeconds);
         }
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred.');
     }
   };
@@ -67,24 +71,50 @@ export default function AdminLoginPage() {
   const isLocked = lockoutSeconds !== null && lockoutSeconds > 0;
 
   return (
-    <div className='max-w-md mx-auto pt-20'>
-      <TypedCommand command='login --admin --secure' prefix='> ' />
+    <div className='max-w-md mx-auto pt-20 font-mono text-xs'>
+      <TypedCommand command='login --admin --zero-trust' prefix='> ' />
       <TerminalWindow pathLabel='security-portal ~ /login' className='mt-4'>
         <form onSubmit={handleLogin} className='space-y-4'>
-          <div className='flex items-center gap-2 text-terminal-green mb-4'>
-            <Lock className='w-5 h-5' />
-            <h2 className='font-bold tracking-wider'>SECURE ACCESS REQ</h2>
+          <div className='flex items-center justify-between border-b border-terminal-green/20 pb-2'>
+            <div className='flex items-center gap-2 text-terminal-green font-bold text-sm'>
+              <Lock className='w-4 h-4' />
+              <span>SECURE ROOT ACCESS</span>
+            </div>
+            <button
+              type='button'
+              onClick={() => setShowTotp(!showTotp)}
+              className='text-[10px] text-terminal-muted hover:text-terminal-green transition'
+            >
+              {showTotp ? 'Hide 2FA' : '+ 2FA Code'}
+            </button>
           </div>
 
-          <input
-            type='password'
-            value={passphrase}
-            onChange={(e) => setPassphrase(e.target.value)}
-            placeholder='Enter Master Passphrase...'
-            disabled={isLocked}
-            className='w-full px-4 py-2.5 rounded bg-black border border-terminal-green/30 focus:border-terminal-green focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed'
-            required
-          />
+          <div className='space-y-3'>
+            <input
+              type='password'
+              value={passphrase}
+              onChange={(e) => setPassphrase(e.target.value)}
+              placeholder='Enter Master Passphrase...'
+              disabled={isLocked}
+              className='w-full px-3.5 py-2 rounded bg-black border border-terminal-green/30 focus:border-terminal-green focus:outline-none disabled:opacity-50'
+              required
+            />
+
+            {showTotp && (
+              <div className='relative'>
+                <KeyRound className='w-3.5 h-3.5 text-terminal-muted absolute left-3 top-2.5' />
+                <input
+                  type='text'
+                  maxLength={6}
+                  value={totpCode}
+                  onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ''))}
+                  placeholder='6-Digit 2FA Code (Google Auth)'
+                  disabled={isLocked}
+                  className='w-full pl-9 pr-3.5 py-2 rounded bg-black border border-terminal-green/40 text-terminal-green focus:border-terminal-green focus:outline-none font-bold tracking-widest'
+                />
+              </div>
+            )}
+          </div>
 
           <MathChallenge
             onValidated={(isValid: boolean, token: string, answer: string) => setChallengeData({ token, answer })}
@@ -108,13 +138,14 @@ export default function AdminLoginPage() {
           <button
             type='submit'
             disabled={isLocked}
-            className='w-full py-2.5 rounded bg-terminal-green/10 border border-terminal-green text-terminal-green hover:bg-terminal-green hover:text-black font-bold transition disabled:opacity-30 disabled:cursor-not-allowed'
+            className='w-full py-2.5 rounded bg-terminal-green/10 border border-terminal-green text-terminal-green hover:bg-terminal-green hover:text-black font-bold transition disabled:opacity-30'
           >
-            {isLocked ? `Locked (${lockoutSeconds}s)` : 'Authenticate'}
+            {isLocked ? `Locked (${lockoutSeconds}s)` : 'Authenticate Zero-Trust Session'}
           </button>
         </form>
       </TerminalWindow>
     </div>
   );
 }
+
 

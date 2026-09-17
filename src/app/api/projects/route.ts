@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getProjects, createProject } from '@/lib/db/projects';
 import { verifyAdminSession } from '@/lib/auth/session';
 import { revalidatePath } from 'next/cache';
+import { logSecurityEvent } from '@/lib/db/audit';
 
 export async function GET() {
   try {
@@ -23,6 +24,13 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const newProject = await createProject(body);
 
+    await logSecurityEvent({
+      eventType: 'MUTATION',
+      action: `Created Project: ${body.title || 'Untitled'}`,
+      status: 'SUCCESS',
+      actorHash: 'ROOT_ADMIN',
+    });
+
     revalidatePath('/projects');
     revalidatePath('/');
     revalidatePath('/admin/dashboard');
@@ -33,4 +41,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to create project' }, { status: 500 });
   }
 }
+
 

@@ -112,30 +112,21 @@ export function NowClientView({ settings, items }: NowClientViewProps) {
         </div>
 
         {/* Current Focus Statement */}
-        {(settings.currentFocus || settings.headline) ? (
-          <div className="space-y-2">
-            <div className="text-terminal-muted text-[11px] uppercase tracking-wider font-semibold flex items-center gap-1.5">
-              <Activity className="w-3.5 h-3.5 text-terminal-green" />
-              <span>PRIMARY DIRECTIVE &amp; FOCUS</span>
+        <div className="space-y-2">
+          <div className="text-terminal-muted text-[11px] uppercase tracking-wider font-semibold flex items-center gap-1.5">
+            <Activity className="w-3.5 h-3.5 text-terminal-green" />
+            <span>PRIMARY DIRECTIVE &amp; FOCUS</span>
+          </div>
+          <p className="text-sm font-sans text-terminal-text leading-relaxed font-normal">
+            {settings.currentFocus || settings.headline}
+          </p>
+          {settings.availability && (
+            <div className="pt-2 flex items-center gap-2 text-terminal-amber text-[11px]">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-terminal-amber"></span>
+              <span>{settings.availability}</span>
             </div>
-            <p className="text-sm font-sans text-terminal-text leading-relaxed font-normal">
-              {settings.currentFocus || settings.headline}
-            </p>
-          </div>
-        ) : null}
-
-        {settings.availability ? (
-          <div className="pt-2 flex items-center gap-2 text-terminal-amber text-[11px]">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-terminal-amber"></span>
-            <span>{settings.availability}</span>
-          </div>
-        ) : null}
-
-        {!settings.currentFocus && !settings.headline && !settings.availability && (
-          <div className="text-terminal-muted text-[11px] italic">
-            &gt; No active directive statement recorded yet.
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Category Filter Pills */}
@@ -156,21 +147,7 @@ export function NowClientView({ settings, items }: NowClientViewProps) {
                   : 'border-terminal-green/20 bg-black/40 text-terminal-muted hover:border-terminal-green/40 hover:text-terminal-text'
               }`}
             >
-              <span style={{ color: isSelected ? undefined : cat.color }}>{cat.icon}</span>
-              <span>{cat.label}</span>
-              <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                  isSelected
-                    ? 'bg-terminal-green text-black font-bold'
-                    : 'bg-terminal-green/10 text-terminal-green'
-                }`}
-              >
-                {count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+              {cat.icon}
 
       {/* Items Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -287,6 +264,18 @@ export function NowClientView({ settings, items }: NowClientViewProps) {
         )}
       </div>
 
+              <span>{cat.label}</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${isSelected ? 'bg-terminal-green text-black font-bold' : 'bg-terminal-green/10 text-terminal-green'}`}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+        ;
+      default:
+
       {/* Sivers /now page philosophy footer banner */}
       <div className="mt-12 p-4 rounded-xl border border-terminal-green/20 bg-black/40 text-[11px] text-terminal-muted flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
@@ -308,4 +297,6 @@ export function NowClientView({ settings, items }: NowClientViewProps) {
     </div>
   );
 }
+
+
 
