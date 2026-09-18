@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { X, ShieldCheck, Terminal, FileCode, Layers, Radio, ExternalLink, Cpu, Globe, Compass } from 'lucide-react';
+import { X, ShieldCheck, Terminal, FileCode, Layers, Radio, ExternalLink, Cpu, Globe, Compass, BookMarked } from 'lucide-react';
 
 export function SlidingDrawer({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const pathname = usePathname();
@@ -26,6 +26,7 @@ export function SlidingDrawer({ isOpen, onClose }: { isOpen: boolean; onClose: (
     { label: '04 // PROFILE', href: '/about', icon: Cpu },
     { label: '05 // DIRECTIVES', href: '/now', icon: Radio },
     { label: '06 // COMMS', href: '/contact', icon: Globe },
+    { label: '07 // MANIFEST', href: '/manifest', icon: BookMarked },
   ];
 
   return (
