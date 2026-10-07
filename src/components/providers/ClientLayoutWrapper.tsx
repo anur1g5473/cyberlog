@@ -8,6 +8,7 @@ import { DotTrailProgress } from '@/components/ui/DotTrailProgress';
 import { BootSequence } from '@/components/ui/BootSequence';
 import { CustomCursor } from '@/components/ui/CustomCursor';
 import { SlidingDrawer } from '@/components/ui/SlidingDrawer';
+import { ChatBot } from '@/components/ui/ChatBot';
 
 export function ClientLayoutWrapper({ children }: { children: React.ReactNode }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -46,6 +47,7 @@ export function ClientLayoutWrapper({ children }: { children: React.ReactNode })
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
       />
+      <ChatBot />
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 pt-24 pb-12">
         {children}
       </main>
